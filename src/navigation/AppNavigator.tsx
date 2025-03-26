@@ -1,0 +1,53 @@
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useAuth } from '../hooks/authContext';
+import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
+import { TabNavigator } from './TabNavigator';
+import CharacterScreen from '../screens/character/CharacterScreen';
+import ChatScreen from '../screens/chat/ChatScreen';
+import { RootStackParamList } from './types';
+import SearchScreen from '../screens/search/SearchScreen';
+
+
+
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+export const AppNavigator = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null; // Or a loading indicator
+  }
+
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+      }}
+      initialRouteName={isAuthenticated ? 'Tabs' : 'Onboarding'}
+    >
+      
+      {/* Common screens - available in both authenticated and unauthenticated states */}
+      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      
+      {!isAuthenticated ? (
+        // User is not signed in
+        <>
+          {/* No need to duplicate Onboarding here as it's now common */}
+        </>
+      ) : (
+        // User is signed in
+        <>
+          <Stack.Screen name="Tabs" component={TabNavigator} />
+          <Stack.Screen name="Character" component={CharacterScreen} />
+          <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen name="Search" component={SearchScreen} />
+     
+         
+        </>
+      )}
+    </Stack.Navigator>
+  );
+};

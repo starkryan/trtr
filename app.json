@@ -1,4 +1,7 @@
 {
   "name": "Luvsab",
-  "displayName": "Luvsab"
+  "displayName": "Luvsab",
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-2212478344110330~1960044389"
+  }
 }

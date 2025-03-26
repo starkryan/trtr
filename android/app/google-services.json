@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1044719799082",
+    "project_id": "chumzr-4de06",
+    "storage_bucket": "chumzr-4de06.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044719799082:android:37467878e784e21e21ec53",
+        "android_client_info": {
+          "package_name": "com.luvsab"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPVsuktS2uGQGqTCfoZkxCFR6t5IIrOs8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
