@@ -1,10 +1,10 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, Pressable, Dimensions, StyleSheet, Text } from 'react-native';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Pressable, View } from 'react-native';
 import type { CompositeScreenProps } from '@react-navigation/native';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { MaterialTopTabScreenProps } from '@react-navigation/material-top-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -15,31 +15,85 @@ import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { TabStackParamList, RootStackParamList } from './types';
 
 export type TabScreenProps<T extends keyof TabStackParamList> = CompositeScreenProps<
-  BottomTabScreenProps<TabStackParamList, T>,
+  MaterialTopTabScreenProps<TabStackParamList, T>,
   NativeStackScreenProps<RootStackParamList>
 >;
 
-const Tab = createBottomTabNavigator<TabStackParamList>();
+const Tab = createMaterialTopTabNavigator<TabStackParamList>();
+const { width, height } = Dimensions.get('window');
 
-const CustomTabButton = ({ children, accessibilityState, onPress }: any) => {
-  const focused = accessibilityState.selected;
-
+// Custom tab bar item to control the layout and appearance
+const CustomTabBar = ({ state, descriptors, navigation }: any) => {
+  const insets = useSafeAreaInsets();
+  
   return (
-    <Pressable
-      onPress={onPress}
-      className={`items-center justify-center flex-1`}
+    <View 
+      style={{
+        flexDirection: 'row',
+        backgroundColor: '#111827',
+        height: 65 + insets.bottom,
+        paddingBottom: insets.bottom,
+        borderTopColor: 'transparent',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 0,
+      }}
     >
-      <View 
-        className={`items-center justify-center p-2 rounded-2xl ${
-          focused ? '' : ''
-        }`}
-        style={{
-          transform: [{ scale: focused ? 1.1 : 1 }],
-        }}
-      >
-        {children}
-      </View>
-    </Pressable>
+      {state.routes.map((route: any, index: number) => {
+        const { options } = descriptors[route.key];
+        const label = options.title || route.name;
+        const isFocused = state.index === index;
+        
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+          
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+        
+        return (
+          <Pressable
+            key={route.key}
+            onPress={onPress}
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <View 
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 8,
+                borderRadius: 12,
+                backgroundColor: isFocused ? 'rgba(236, 72, 153, 0.1)' : 'transparent',
+                transform: [{ scale: isFocused ? 1.05 : 1 }],
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '500',
+                  color: isFocused ? '#EC4899' : '#94a3b8',
+                  marginBottom: 4,
+                }}
+              >
+                {label}
+              </Text>
+              {options.tabBarIcon && options.tabBarIcon({ 
+                color: isFocused ? '#EC4899' : '#94a3b8', 
+                focused: isFocused,
+                size: 22 
+              })}
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 };
 
@@ -47,98 +101,72 @@ export const TabNavigator = () => {
   const insets = useSafeAreaInsets();
 
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: '#111827',
-        },
-        headerTintColor: 'white',
-        tabBarStyle: {
-          backgroundColor: '#111827',
-          height: 65 + insets.bottom,
-          paddingBottom: insets.bottom + 8,
-          paddingTop: 12,
-          elevation: 0,
-          borderTopWidth: 0,
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          borderTopColor: 'transparent',
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: -8,
+    <View style={{ flex: 1, backgroundColor: '#111827' }}>
+      <Tab.Navigator
+        style={{
+          position: 'relative',
+          minHeight: height - (48 + insets.bottom),
+        }}
+        tabBarPosition="bottom"
+        tabBar={props => <CustomTabBar {...props} />}
+        screenOptions={{
+          tabBarIndicatorStyle: {
+            opacity: 0,
+            height: 0,
           },
-          shadowOpacity: 0.1,
-          shadowRadius: 24,
-        },
-        tabBarActiveTintColor: '#EC4899',
-        tabBarInactiveTintColor: '#94a3b8',
-        tabBarShowLabel: true,
-        tabBarButton: (props) => <CustomTabButton {...props} />,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
-          marginTop: 4,
-        },
-        tabBarBackground: () => (
-          <View className="absolute inset-0 overflow-hidden">
-            <View className="absolute inset-0 bg-[#111827]/95 backdrop-blur-xl" />
-            <View className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-pink-500/20 to-transparent" />
-          </View>
-        )
-      }}
-    >
-      <Tab.Screen
-        name="HomeTab"
-        component={HomeScreen}
-        options={{
-          headerShown: false,
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Animated.View entering={FadeInDown}>
-              <Icon name="home-outline" color={color} size={22} />
-            </Animated.View>
-          ),
+          swipeEnabled: true,
+          animationEnabled: true,
         }}
-      />
-      <Tab.Screen
-        name="Inbox"
-        component={InboxScreen}
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Animated.View entering={FadeInDown.delay(100)}>
-              <Icon name="chatbubble-ellipses-outline" color={color} size={22} />
-            </Animated.View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Favorites"
-        component={FavoriteScreen}
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Animated.View entering={FadeInDown.delay(200)}>
-              <Icon name="heart-outline" color={color} size={22} />
-            </Animated.View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Animated.View entering={FadeInDown.delay(300)}>
-              <Icon name="person-outline" color={color} size={22} />
-            </Animated.View>
-          ),
-        }}
-      />
-    </Tab.Navigator>
+      >
+        <Tab.Screen
+          name="HomeTab"
+          component={HomeScreen}
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color }) => (
+              <Animated.View entering={FadeInDown}>
+                <Icon name="home-outline" color={color} size={22} />
+              </Animated.View>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Inbox"
+          component={InboxScreen}
+          options={{
+            title: 'Inbox',
+            tabBarIcon: ({ color }) => (
+              <Animated.View entering={FadeInDown.delay(100)}>
+                <Icon name="chatbubble-ellipses-outline" color={color} size={22} />
+              </Animated.View>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Favorites"
+          component={FavoriteScreen}
+          options={{
+            title: 'Favorites',
+            tabBarIcon: ({ color }) => (
+              <Animated.View entering={FadeInDown.delay(200)}>
+                <Icon name="heart-outline" color={color} size={22} />
+              </Animated.View>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color }) => (
+              <Animated.View entering={FadeInDown.delay(300)}>
+                <Icon name="person-outline" color={color} size={22} />
+              </Animated.View>
+            ),
+          }}
+        />
+      </Tab.Navigator>
+    </View>
   );
 }; 
