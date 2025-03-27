@@ -171,42 +171,46 @@ const CharacterScreen: React.FC<CharacterScreenProps> = ({ route, navigation }) 
         style={{ resizeMode: 'cover' }}
       />
       
-      {/* Top Gradient */}
+      {/* Top Gradient - Made darker for better text visibility */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.7)', 'transparent']}
-        className="absolute top-0 left-0 right-0 h-40"
+        colors={['rgba(0,0,0,0.8)', 'transparent']}
+        className="absolute top-0 left-0 right-0 h-48"
       />
       
-      {/* Bottom Gradient */}
+      {/* Bottom Gradient - Stronger gradient for better readability */}
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.95)']}
-        className="absolute bottom-0 left-0 right-0 h-[70%]"
+        colors={['transparent', 'rgba(0,0,0,0.98)']}
+        className="absolute bottom-0 left-0 right-0 h-[75%]"
       />
 
-      {/* Back Button */}
+      {/* Back Button and Actions */}
       <SafeAreaView>
-        <View className="flex-row justify-between items-center px-4 pt-2 gap-2">
+        <View className="flex-row justify-between items-center px-4 pt-3">
           <TouchableOpacity
-            className="bg-black/20 backdrop-blur-md rounded-full p-2"
+            className="bg-white/10 backdrop-blur-xl border border-white/20 p-3 rounded-2xl active:opacity-80"
             onPress={() => navigation.goBack()}
           >
-            <Icon name="arrow-left" size={24} color="#fff" />
+            <Icon name="arrow-left" size={20} color="#fff" />
           </TouchableOpacity>
 
-          <View className="flex-row space-x-3 gap-2">
+          <View className="flex-row gap-3">
             <TouchableOpacity
-              className="bg-black/20 backdrop-blur-md rounded-full p-2"
+              className="bg-white/10 backdrop-blur-xl border border-white/20 p-3 rounded-2xl active:opacity-80"
               onPress={handleStartChat}
             >
-              <Icon name="chat-outline" size={24} color="#fff" />
+              <Icon name="chat-outline" size={20} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity
-              className="bg-black/20 backdrop-blur-md rounded-full p-2"
+              className={`p-3 rounded-2xl active:opacity-80 border ${
+                isLiked 
+                  ? 'bg-pink-500/20 backdrop-blur-xl border-pink-500/30' 
+                  : 'bg-white/10 backdrop-blur-xl border-white/20'
+              }`}
               onPress={handleLike}
             >
               <Icon 
                 name={isLiked ? "heart" : "heart-outline"} 
-                size={24} 
+                size={20} 
                 color={isLiked ? "#EC4899" : "#fff"} 
               />
             </TouchableOpacity>
@@ -218,46 +222,53 @@ const CharacterScreen: React.FC<CharacterScreenProps> = ({ route, navigation }) 
       <View className="absolute bottom-0 left-0 right-0">
         <Animated.View 
           entering={SlideInDown.delay(200)}
-          className="px-4 pb-4"
+          className="px-5 pb-5"
         >
-          {/* Name and Age */}
-          <View className="mb-4">
-            <Text className="text-white text-4xl font-bold">
-              {profile.name}
-              <Ionicons name="verified" size={18} color="#1DA1F2" className="ml-1" />
+          {/* Profile Info */}
+          <View className="mb-5">
+            <View className="flex-row items-center mb-2">
+              <Text className="text-white text-4xl font-bold">
+                {profile.name}
+              </Text>
+              <Ionicons name="verified" size={20} color="#1DA1F2" style={{ marginLeft: 8 }} />
+            </View>
+            <Text className="text-white/80 text-base">
+              {profile.occupation}
             </Text>
           </View>
 
           {/* Quick Stats */}
-          <View className="flex-row space-x-4 mb-6 gap-2">
-            <View className="bg-white/10 backdrop-blur-md rounded-2xl px-4 py-2">
-              <Text className="text-white font-semibold">{profile.style || (profile.traits && profile.traits[0]) || 'Character'}</Text>
+          <View className="flex-row gap-3 mb-6">
+            <View className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-4 py-2.5 flex-row items-center">
+              <Icon name="star" size={18} color="#FACC15" style={{ marginRight: 6 }} />
+              <Text className="text-white font-medium">{profile.style || (profile.traits && profile.traits[0]) || 'Character'}</Text>
             </View>
-            <View className="bg-white/10 backdrop-blur-md rounded-2xl px-4 py-2">
-              <Text className="text-white font-semibold">{profile.responseTime || 'Online'}</Text>
+            <View className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-4 py-2.5 flex-row items-center">
+              <Icon name="clock-outline" size={18} color="#22C55E" style={{ marginRight: 6 }} />
+              <Text className="text-white font-medium">{profile.responseTime || 'Online'}</Text>
             </View>
           </View>
 
           {/* Action Buttons */}
-          <View className="flex-row space-x-3 gap-2">
+          <View className="flex-row gap-3">
             <TouchableOpacity
-              className="flex-1 bg-pink-500 rounded-2xl py-4 flex-row items-center justify-center"
-              activeOpacity={0.8}
+              className="flex-1 bg-pink-500 rounded-2xl py-4 flex-row items-center justify-center active:opacity-90"
               onPress={handleStartChat}
             >
-              <Icon name="chat" size={20} color="#fff" className="mr-2" />
-              <Text className="text-white font-semibold text-lg">Message</Text>
+              <Icon name="chat" size={20} color="#fff" />
+              <Text className="text-white font-semibold text-base ml-2">Start Chat</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className={`w-14 rounded-2xl items-center justify-center ${
-                isLiked ? 'bg-pink-500' : 'bg-white/10 backdrop-blur-md'
+              className={`w-14 rounded-2xl items-center justify-center border ${
+                isLiked 
+                  ? 'bg-pink-500 border-pink-500' 
+                  : 'bg-white/10 backdrop-blur-xl border-white/20'
               }`}
-              activeOpacity={0.8}
               onPress={handleLike}
             >
               <Icon 
                 name={isLiked ? "heart" : "heart-outline"} 
-                size={28} 
+                size={22} 
                 color="#fff" 
               />
             </TouchableOpacity>
@@ -267,7 +278,7 @@ const CharacterScreen: React.FC<CharacterScreenProps> = ({ route, navigation }) 
         {/* About Section */}
         <Animated.View 
           entering={SlideInDown.delay(300)}
-          className="bg-[#111827]/95 backdrop-blur-md rounded-t-3xl mt-4 p-6"
+          className="bg-[#111827]/95 backdrop-blur-xl rounded-t-3xl mt-4 p-6"
           style={{ paddingBottom: insets.bottom + 16 }}
         >
           {/* Banner Ad */}
@@ -278,21 +289,33 @@ const CharacterScreen: React.FC<CharacterScreenProps> = ({ route, navigation }) 
             />
           )}
           
-          <Text className="text-white text-xl font-semibold mb-4">About</Text>
-          <Text className="text-gray-300 text-base leading-6 mb-6">
-            {profile.description || `Passionate and dedicated ${profile.occupation.toLowerCase()}. Always eager to learn and share knowledge with others.`}
-          </Text>
+          {/* About Section */}
+          <View className="mb-6">
+            <View className="flex-row items-center mb-4">
+              <Icon name="information" size={22} color="#fff" />
+              <Text className="text-white text-xl font-semibold ml-2">About</Text>
+            </View>
+            <Text className="text-gray-300 text-base leading-6">
+              {profile.description || `Passionate and dedicated ${profile.occupation.toLowerCase()}. Always eager to learn and share knowledge with others.`}
+            </Text>
+          </View>
 
-          <Text className="text-white text-xl font-semibold mb-4">Interests</Text>
-          <View className="flex-row flex-wrap">
-            {(profile.interests && profile.interests.length > 0 ? profile.interests : ['Reading', 'Travel', 'Art', 'Music', 'Photography']).map((interest) => (
-              <View
-                key={interest}
-                className="bg-white/10 rounded-full px-4 py-2 mr-2 mb-2"
-              >
-                <Text className="text-white">{interest}</Text>
-              </View>
-            ))}
+          {/* Interests Section */}
+          <View>
+            <View className="flex-row items-center mb-4">
+              <Icon name="heart" size={22} color="#EC4899" />
+              <Text className="text-white text-xl font-semibold ml-2">Interests</Text>
+            </View>
+            <View className="flex-row flex-wrap gap-2">
+              {(profile.interests && profile.interests.length > 0 ? profile.interests : ['Reading', 'Travel', 'Art', 'Music', 'Photography']).map((interest) => (
+                <View
+                  key={interest}
+                  className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl px-4 py-2"
+                >
+                  <Text className="text-white/90 font-medium">{interest}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         </Animated.View>
       </View>

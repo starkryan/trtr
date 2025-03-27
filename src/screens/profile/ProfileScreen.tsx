@@ -41,14 +41,14 @@ const SettingItem = ({
 }) => (
   <TouchableOpacity
     onPress={onPress}
-    className="flex-row items-center bg-white/5 rounded-2xl p-4 mb-3"
+    className="flex-row items-center bg-white/5 rounded-2xl p-4 mb-3 border border-white/10 active:opacity-80"
     activeOpacity={0.7}
   >
-    <View className="w-10 h-10 rounded-full bg-white/10 items-center justify-center">
+    <View className="w-10 h-10 rounded-xl bg-white/10 items-center justify-center">
       <Icon name={icon} size={20} color="#fff" />
     </View>
-    <Text className="text-white font-medium ml-3 flex-1">{title}</Text>
-    {rightElement || <Icon name="chevron-right" size={20} color="#fff" />}
+    <Text className="text-white/90 font-medium ml-3 flex-1">{title}</Text>
+    {rightElement || <Icon name="chevron-right" size={20} color="rgba(255,255,255,0.6)" />}
   </TouchableOpacity>
 );
 
@@ -295,10 +295,9 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
 
       <SafeAreaView className="flex-1" edges={['top']}>
         {/* Header */}
-        <View className="px-4 py-4 bg-[#111827]">
+        <View className="px-4 py-4 border-b border-white/10">
           <View className="flex-row items-center justify-between mb-2">
             <Text className="text-2xl font-bold text-white">Profile</Text>
-
           </View>
         </View>
 
@@ -324,36 +323,34 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
           indicatorStyle="white"
         >
           {/* Profile Header */}
-          <View className="items-center mb-6">
-            <Image
-              source={userProfile?.avatar ? { uri: userProfile.avatar } : DEFAULT_AVATAR}
-              className="w-24 h-24 rounded-full mb-4"
-            />
-            <Text className="text-white text-xl font-bold mb-1">
+          <View className="items-center mb-8">
+            <View className="relative">
+              <Image
+                source={userProfile?.avatar ? { uri: userProfile.avatar } : DEFAULT_AVATAR}
+                className="w-24 h-24 rounded-2xl mb-4 border-2 border-white/10"
+              />
+            </View>
+            <Text className="text-white text-xl font-bold mb-2">
               {userProfile?.name || 'Guest User'}
             </Text>
-            <TouchableOpacity
-              onPress={handleEditProfile}
-              className="bg-indigo-500/20 px-4 py-2 rounded-full border border-indigo-500/30 mt-2"
-            >
-              <Text className="text-indigo-400 font-medium">Edit Profile</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Coin Display */}
-          <View className="bg-[#1F2937] rounded-2xl p-4 mb-6 border border-white/10">
+          <View className="bg-[#1F2937] rounded-2xl p-5 mb-8 border border-white/10">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center">
-                <Icon name="coin" size={24} color="#FACC15" />
-                <Text className="text-white font-semibold ml-2 text-lg">Your Coins</Text>
+                <View className="bg-yellow-500/20 p-2 rounded-xl">
+                  <Icon name="coin" size={24} color="#FACC15" />
+                </View>
+                <Text className="text-white font-semibold ml-3 text-lg">Your Coins</Text>
               </View>
-              <Text className="text-yellow-400 font-bold text-lg">{coins}</Text>
+              <Text className="text-yellow-400 font-bold text-xl">{coins}</Text>
             </View>
           </View>
 
           {/* Settings */}
-          <View className="mb-6">
-            <Text className="text-white text-lg font-semibold mb-3">
+          <View className="mb-8">
+            <Text className="text-white/90 text-lg font-semibold mb-4 px-1">
               Settings
             </Text>
             <SettingItem icon="account-edit" title="Edit Profile" onPress={handleEditProfile} />
@@ -377,35 +374,31 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
             />
             <SettingItem icon="shield-check" title="Privacy" />
             <SettingItem icon="help-circle" title="Help & Support" />
-
           </View>
 
           {/* Logout Button */}
           <TouchableOpacity
             onPress={() => setShowLogoutModal(true)}
-            className="bg-red-500 rounded-2xl p-4 mb-6"
+            className="bg-red-500/10 rounded-2xl p-4 mb-8 border border-red-500/20"
             activeOpacity={0.7}
           >
             <View className="flex-row items-center justify-center space-x-2">
-              <Icon name="logout-variant" size={24} color="#fff" />
-              <Text className="text-white font-semibold text-base">
+              <Icon name="logout-variant" size={22} color="#EF4444" />
+              <Text className="text-red-500 font-semibold text-base ml-2">
                 Log Out
               </Text>
             </View>
           </TouchableOpacity>
 
+          {/* App Info */}
           <View className="mb-6">
-
-            <View className="bg-white/5 rounded-2xl p-4">
-              <View className="flex-row items-center mb-3 justify-center">
-                <Text className="text-white font-medium text-center">
+            <View className="bg-white/5 rounded-2xl p-5 border border-white/10">
+              <View className="items-center space-y-2">
+                <Text className="text-white/90 font-medium text-center text-lg">
                   {APP_NAME}
                 </Text>
+                <Text className="text-white/60 font-medium">Version {APP_VERSION}</Text>
               </View>
-              <View className="flex-row items-center justify-center mb-3">
-                <Text className="text-white font-medium">Version {APP_VERSION}</Text>
-              </View>
-
             </View>
           </View>
         </ScrollView>
@@ -422,18 +415,20 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
           entering={FadeInDown}
           className="flex-1 justify-center items-center bg-black/50"
         >
-          <View className="bg-[#1F2937] m-8 p-6 rounded-3xl border border-gray-700/50 w-[85%]">
+          <View className="bg-[#1F2937] m-8 p-6 rounded-3xl border border-white/10 w-[85%]">
             {/* Modal Header */}
             <View className="flex-row justify-between items-center mb-6">
-              <View className="flex-row items-center space-x-2">
-                <Icon name="account-edit" size={24} color="#6366F1" />
+              <View className="flex-row items-center space-x-3">
+                <View className="bg-indigo-500/20 p-2 rounded-xl">
+                  <Icon name="account-edit" size={22} color="#6366F1" />
+                </View>
                 <Text className="text-xl font-semibold text-white">
                   Edit Profile
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setShowEditModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-white/10 items-center justify-center"
               >
                 <Icon name="close" size={20} color="#9CA3AF" />
               </TouchableOpacity>
@@ -441,12 +436,12 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
 
             {/* Edit Form */}
             <View className="mb-6">
-              <Text className="text-gray-400 mb-2">Name</Text>
+              <Text className="text-white/60 mb-2 font-medium">Name</Text>
               <TextInput
                 value={editName}
                 onChangeText={setEditName}
-                className="bg-white/5 border border-gray-700/50 rounded-xl px-4 py-3 text-white mb-4"
-                placeholderTextColor="#6B7280"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white mb-4"
+                placeholderTextColor="rgba(156, 163, 175, 0.5)"
                 placeholder="Enter your name"
               />
             </View>
@@ -458,15 +453,15 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
                 className="px-6 py-3 rounded-xl bg-white/10 flex-row items-center space-x-2"
               >
                 <Icon name="close" size={20} color="#fff" />
-                <Text className="text-white font-medium">Cancel</Text>
+                <Text className="text-white font-medium ml-2">Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleSaveProfile}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 flex-row items-center space-x-2"
+                className="px-6 py-3 rounded-xl bg-indigo-500 flex-row items-center space-x-2"
               >
                 <Icon name="content-save" size={20} color="#fff" />
-                <Text className="text-white font-medium">Save</Text>
+                <Text className="text-white font-medium ml-2">Save</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -484,43 +479,45 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
           entering={FadeInDown}
           className="flex-1 justify-center items-center bg-black/50"
         >
-          <View className="bg-[#1F2937] m-8 p-6 rounded-3xl border border-gray-700/50 w-[85%]">
+          <View className="bg-[#1F2937] m-8 p-6 rounded-3xl border border-white/10 w-[85%]">
             {/* Modal Header */}
             <View className="flex-row justify-between items-center mb-4">
-              <View className="flex-row items-center space-x-2">
-                <Icon name="logout-variant" size={24} color="#EF4444" />
+              <View className="flex-row items-center space-x-3">
+                <View className="bg-red-500/20 p-2 rounded-xl">
+                  <Icon name="logout-variant" size={22} color="#EF4444" />
+                </View>
                 <Text className="text-xl font-semibold text-white">
                   Confirm Logout
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setShowLogoutModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-white/10 items-center justify-center"
               >
                 <Icon name="close" size={20} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
 
             {/* Modal Content */}
-            <Text className="text-gray-300 text-base mb-4">
+            <Text className="text-gray-300 text-base mb-4 leading-6">
               Are you sure you want to log out? You'll need to sign in again to access your account.
             </Text>
 
             {/* Added separator line */}
-            <View className="border-b border-gray-700/50 mb-4" />
+            <View className="border-b border-white/10 mb-4" />
 
             {/* Modal Actions */}
-            <View className="flex-row justify-end space-x-3 gap-2">
+            <View className="flex-row justify-end space-x-3">
               <TouchableOpacity
                 onPress={() => setShowLogoutModal(false)}
-                className="px-6 py-3 rounded-xl bg-white/10 flex-row items-center space-x-2"
+                className="px-6 py-3 rounded-xl bg-white/10 flex-row items-center"
               >
                 <Text className="text-white font-medium">Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleLogout}
-                className="px-6 py-3 rounded-xl bg-red-500 flex-row items-center space-x-2"
+                className="px-6 py-3 rounded-xl bg-red-500/90 flex-row items-center"
               >
                 <Text className="text-white font-medium">Logout</Text>
               </TouchableOpacity>

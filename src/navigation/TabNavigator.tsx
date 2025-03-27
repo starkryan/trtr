@@ -30,15 +30,10 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
     <View 
       style={{
         flexDirection: 'row',
-        backgroundColor: '#111827',
+        backgroundColor: 'transparent',
         height: 65 + insets.bottom,
         paddingBottom: insets.bottom,
         borderTopColor: 'transparent',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 0,
       }}
     >
       {state.routes.map((route: any, index: number) => {
@@ -69,26 +64,34 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: 8,
-                borderRadius: 12,
-                backgroundColor: isFocused ? 'rgba(236, 72, 153, 0.1)' : 'transparent',
                 transform: [{ scale: isFocused ? 1.05 : 1 }],
               }}
             >
+              <View
+                style={{
+                  padding: 8,
+                  borderRadius: isFocused ? 16 : 12,
+                  backgroundColor: isFocused ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                  borderWidth: 1,
+                  borderColor: isFocused ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+                }}
+              >
+                {options.tabBarIcon && options.tabBarIcon({ 
+                  color: isFocused ? '#fff' : 'rgba(255, 255, 255, 0.6)', 
+                  focused: isFocused,
+                  size: 22 
+                })}
+              </View>
               <Text
                 style={{
                   fontSize: 11,
                   fontWeight: '500',
-                  color: isFocused ? '#EC4899' : '#94a3b8',
-                  marginBottom: 4,
+                  color: isFocused ? '#fff' : 'rgba(255, 255, 255, 0.6)',
+                  marginTop: 4,
                 }}
               >
                 {label}
               </Text>
-              {options.tabBarIcon && options.tabBarIcon({ 
-                color: isFocused ? '#EC4899' : '#94a3b8', 
-                focused: isFocused,
-                size: 22 
-              })}
             </View>
           </Pressable>
         );

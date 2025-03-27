@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, KeyboardAvoidingView, Platform, Pressable, ActivityIndicator, Alert, Image, ImageBackground, StatusBar, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, FlatList, KeyboardAvoidingView, Platform, Pressable, ActivityIndicator, Alert, Image, ImageBackground, StatusBar, TouchableOpacity, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { sendMessage } from '../../api/services/chat';
@@ -46,9 +46,11 @@ function ChatScreen({ route, navigation }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const [showRewardedAdPrompt, setShowRewardedAdPrompt] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const typingAnimation = useRef(new Animated.Value(0)).current;
   
   // Initialize rewarded ad
   const { isLoaded: rewardedAdLoaded, load: loadRewardedAd, show: showRewardedAd, earned, reward } = useRewardedAd();
@@ -197,6 +199,60 @@ function ChatScreen({ route, navigation }: Props) {
     }
   }, [rewardedAdLoaded, showRewardedAd, loadRewardedAd]);
 
+  // Add typing animation component
+  const TypingIndicator = () => {
+    useEffect(() => {
+      const animation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(typingAnimation, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true
+          }),
+          Animated.timing(typingAnimation, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true
+          })
+        ])
+      );
+      
+      animation.start();
+      
+      return () => animation.stop();
+    }, []);
+
+    return (
+      <View className="flex-row mb-4 mx-4">
+        <Image
+          source={{ uri: profileImage }}
+          className="w-8 h-8 rounded-full mr-2"
+          style={{ alignSelf: 'flex-end' }}
+        />
+        <View className="rounded-2xl px-4 py-3 bg-gray-700/90 flex-row items-center space-x-1">
+          <Animated.View 
+            className="w-2 h-2 rounded-full bg-gray-400"
+            style={{ opacity: typingAnimation }}
+          />
+          <Animated.View 
+            className="w-2 h-2 rounded-full bg-gray-400"
+            style={{ opacity: typingAnimation.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0.3, 1]
+            }) }}
+          />
+          <Animated.View 
+            className="w-2 h-2 rounded-full bg-gray-400"
+            style={{ opacity: typingAnimation.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0.1, 1]
+            }) }}
+          />
+        </View>
+      </View>
+    );
+  };
+
   const handleSendMessage = useCallback(async () => {
     if (!inputText.trim() || isLoading) return;
     if (!characterId) {
@@ -227,19 +283,20 @@ function ChatScreen({ route, navigation }: Props) {
     setMessages(updatedMessages);
     setInputText('');
     setIsLoading(true);
+    setIsTyping(true);
 
     try {
       const response = await sendMessage(
         characterId,
         userMessage.text,
-        updatedMessages // Send updated messages including user's message
+        updatedMessages
       );
       
       // Update messages with the response
       const finalMessages = [...updatedMessages, response];
       setMessages(finalMessages);
       
-      // Save conversation after successful message, passing the complete message history
+      // Save conversation after successful message
       await saveToInbox(response.text, finalMessages);
 
       // Scroll to bottom
@@ -249,7 +306,6 @@ function ChatScreen({ route, navigation }: Props) {
     } catch (error: any) {
       console.error('Error sending message:', error);
       
-      // Add error message to chat
       const errorMessage: Message = {
         id: Date.now().toString(),
         text: "I'm having trouble connecting right now. Can you try again in a moment?",
@@ -259,16 +315,15 @@ function ChatScreen({ route, navigation }: Props) {
       const messagesWithError = [...updatedMessages, errorMessage];
       setMessages(messagesWithError);
       
-      // Save conversation with error message
       await saveToInbox(errorMessage.text, messagesWithError);
 
-      // Show error alert with specific message
       Alert.alert(
         'Error',
         error.response?.data?.message || error.message || 'Failed to send message'
       );
     } finally {
       setIsLoading(false);
+      setIsTyping(false);
     }
   }, [inputText, messages, characterId, showRewardedAdPrompt, checkMessageLimit]);
 
@@ -433,6 +488,7 @@ function ChatScreen({ route, navigation }: Props) {
                   </Text>
                 </View>
               }
+              ListFooterComponent={isTyping ? <TypingIndicator /> : null}
             />
 
             {/* Rewarded Ad Prompt */}
