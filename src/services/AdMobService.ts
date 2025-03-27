@@ -21,18 +21,18 @@ import {
  * Use test IDs for development and real IDs for production
  */
 export const adUnitIds = {
-  // Use real ad unit IDs in production
-  appOpen: __DEV__ ? TestIds.APP_OPEN : 'ca-app-pub-2212478344110330/4570761824',
-  banner: __DEV__ ? TestIds.BANNER : 'ca-app-pub-2212478344110330/6204942547',
-  // Special always-fills units for emulators and simulators (doesn't work on physical devices)
+  // Use test IDs for all environments for safety
+  appOpen: TestIds.APP_OPEN,
+  banner: TestIds.BANNER,
+  // Test IDs that always fill on emulators/simulators
   simulatorBanner: 'ca-app-pub-3940256099942544/6300978111',
   simulatorInterstitial: 'ca-app-pub-3940256099942544/1033173712',
   simulatorRewarded: 'ca-app-pub-3940256099942544/5224354917',
-  // Regular ad units
-  interstitial: __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-2212478344110330/2889552175',
-  rewarded: __DEV__ ? TestIds.REWARDED : 'ca-app-pub-2212478344110330/4761920480',
-  rewardedInterstitial: __DEV__ ? TestIds.REWARDED_INTERSTITIAL : 'ca-app-pub-2212478344110330/7684472068',
-  native: __DEV__ ? TestIds.NATIVE : 'ca-app-pub-2212478344110330/4753144782',
+  // Regular ad units with test IDs
+  interstitial: TestIds.INTERSTITIAL,
+  rewarded: TestIds.REWARDED,
+  rewardedInterstitial: TestIds.REWARDED_INTERSTITIAL,
+  native: TestIds.NATIVE,
 };
 
 // Default request configuration
@@ -41,8 +41,8 @@ export const defaultRequestOptions: RequestOptions = {
   requestNonPersonalizedAdsOnly: false,
 };
 
-// Default app ID (public test ID)
-export const defaultAppId = 'ca-app-pub-2212478344110330~1960044389';
+// Use test app ID
+export const defaultAppId = 'ca-app-pub-3940256099942544~3347511713';
 
 // Time to keep ads in cache before refreshing (in ms)
 const AD_CACHE_EXPIRY = 30 * 60 * 1000; // 30 minutes

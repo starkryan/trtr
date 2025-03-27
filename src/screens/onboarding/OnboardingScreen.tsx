@@ -279,7 +279,7 @@ export const OnboardingScreen = () => {
         <TouchableOpacity
           onPress={handlePrivacyPolicy}
           activeOpacity={0.7}
-          className="py-2 px-4 bg-white/10 rounded-full"
+          className="py-2 px-4 bg-white/10 rounded-full mb-28"
         >
           <Text className="text-white/70 text-sm font-semibold">
             Privacy Policy

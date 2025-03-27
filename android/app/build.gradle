@@ -86,9 +86,9 @@ android {
         versionCode 6
         versionName "1.0"
         
-        // Add this line for Google Mobile Ads
+        // Add this line for Google Mobile Ads (using test app ID)
         manifestPlaceholders = [
-            admob_app_id: "ca-app-pub-2212478344110330~1960044389" // Updated App ID
+            admob_app_id: "ca-app-pub-3940256099942544~3347511713" // Test App ID
         ]
     }
     signingConfigs {

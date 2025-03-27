@@ -21,6 +21,7 @@ import BannerAdComponent from '../../components/ads/BannerAdComponent';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
 
 const DEFAULT_AVATAR = require('../../../assets/avatar.png');
+const coinImage = require('../../../assets/coin.png');
 
 // Hardcoded constants for app information
 const APP_NAME = 'Luvsab';
@@ -326,8 +327,9 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
           <View className="items-center mb-8">
             <View className="relative">
               <Image
-                source={userProfile?.avatar ? { uri: userProfile.avatar } : DEFAULT_AVATAR}
+                source={typeof userProfile?.avatar === 'string' ? { uri: userProfile.avatar } : (userProfile?.avatar || DEFAULT_AVATAR)}
                 className="w-24 h-24 rounded-2xl mb-4 border-2 border-white/10"
+                resizeMode="cover"
               />
             </View>
             <Text className="text-white text-xl font-bold mb-2">
@@ -340,7 +342,11 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center">
                 <View className="bg-yellow-500/20 p-2 rounded-xl">
-                  <Icon name="coin" size={24} color="#FACC15" />
+                  <Image 
+                    source={coinImage} 
+                    className="w-6 h-6"
+                    resizeMode="contain"
+                  />
                 </View>
                 <Text className="text-white font-semibold ml-3 text-lg">Your Coins</Text>
               </View>
@@ -507,7 +513,7 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
             <View className="border-b border-white/10 mb-4" />
 
             {/* Modal Actions */}
-            <View className="flex-row justify-end space-x-3">
+            <View className="flex-row justify-end space-x-3 gap-x-3">
               <TouchableOpacity
                 onPress={() => setShowLogoutModal(false)}
                 className="px-6 py-3 rounded-xl bg-white/10 flex-row items-center"

@@ -399,29 +399,14 @@ export const HomeScreen: React.FC<TabScreenProps<'HomeTab'>> = ({ navigation }) 
         {/* Modern Header */}
         <View className="px-4 py-4">
           <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center space-x-2 relative">
-              <Icon name="heart" size={30} color="#EC4899" />
-              <View className="relative">
-                <Svg height="30" width="60">
-                  <Path
-                    d="M0,15 C20,5 40,25 60,15"
-                    stroke="#EC4899"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                  <Path
-                    d="M25,15 L35,15"
-                    stroke="#EC4899"
-                    strokeWidth="2"
-                    strokeDasharray="3,3"
-                  />
-                </Svg>
-                <Text className="text-white/60 text-sm font-bold absolute left-[22] top-[6]">Sab</Text>
-              </View>
-              <Icon name="heart" size={30} color="#EC4899" />
+            <View className="flex-row items-center space-x-2">
+              <Image 
+                source={require('../../../assets/logo.png')} 
+                style={{ width: 120, height: 40 }}
+                resizeMode="contain"
+              />
             </View>
             <View className="flex-row items-center space-x-3">
-             
               <TouchableOpacity 
                 onPress={() => navigation.navigate('Search')} 
                 className="bg-white/10 backdrop-blur-xl border border-white/20 p-3 rounded-2xl"

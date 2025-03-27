@@ -2,9 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { signInAnonymously, getCurrentUser, signOut as firebaseSignOut } from '../services/FirebaseService';
 
+// Add the default avatar import
+const DEFAULT_AVATAR = require('../../assets/avatar.png');
+
 type UserProfile = {
   name: string;
-  avatar: string;
+  avatar: string | number; // Updated to allow both string and number types for local assets
 };
 
 type AuthContextType = {
@@ -15,8 +18,6 @@ type AuthContextType = {
   logout: () => Promise<void>;
   updateProfile: (profile: Partial<UserProfile>) => Promise<void>;
 };
-
-const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=0D8ABC&color=fff';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -69,7 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Prepare profile data if needed
       const profileData = !userProfile ? {
         name: 'New User',
-        avatar: DEFAULT_AVATAR
+        avatar: DEFAULT_AVATAR // Now using the local image
       } : null;
 
       // Run all async operations in parallel
