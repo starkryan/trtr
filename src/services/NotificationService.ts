@@ -155,13 +155,17 @@ class NotificationService {
         importance: AndroidImportance.HIGH,
         visibility: AndroidVisibility.PUBLIC,
         vibration: true,
+        // Pattern for vibration in milliseconds:
+        // First value: vibrate duration, Second value: pause duration, etc.
+        vibrationPattern: [300, 500, 300, 500],
         lights: true,
         lightColor: AndroidColor.RED,
-        sound: 'default',
+        sound: 'default', // Use default sound
         badge: true
       });
       
       this.channelCreated = true;
+      console.log('Notification channel created with sound and vibration');
     } catch (error) {
       console.error('Error creating notification channel:', error);
       throw error;

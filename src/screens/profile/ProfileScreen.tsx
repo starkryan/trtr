@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Modal, StatusBar, TextInput, Switch, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Modal, StatusBar, TextInput, Switch, Alert, Platform, Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -25,20 +25,25 @@ const coinImage = require('../../../assets/coin.png');
 
 // Hardcoded constants for app information
 const APP_NAME = 'Luvsab';
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.4';
 
 const NOTIFICATION_PERMISSION = 'android.permission.POST_NOTIFICATIONS' as Permission;
+
+const PRIVACY_POLICY_URL = 'https://www.luvsab.com/privacy-policy';
+const HELP_SUPPORT_URL = 'https://www.luvsab.com/support';
 
 const SettingItem = ({
   icon,
   title,
   onPress,
-  rightElement
+  rightElement,
+  description
 }: {
   icon: string;
   title: string;
   onPress?: () => void;
   rightElement?: React.ReactNode;
+  description?: string;
 }) => (
   <TouchableOpacity
     onPress={onPress}
@@ -48,7 +53,12 @@ const SettingItem = ({
     <View className="w-10 h-10 rounded-xl bg-white/10 items-center justify-center">
       <Icon name={icon} size={20} color="#fff" />
     </View>
-    <Text className="text-white/90 font-medium ml-3 flex-1">{title}</Text>
+    <View className="ml-3 flex-1">
+      <Text className="text-white/90 font-medium">{title}</Text>
+      {description && (
+        <Text className="text-white/50 text-sm mt-1">{description}</Text>
+      )}
+    </View>
     {rightElement || <Icon name="chevron-right" size={20} color="rgba(255,255,255,0.6)" />}
   </TouchableOpacity>
 );
@@ -65,7 +75,7 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
   const insets = useSafeAreaInsets();
   const messagingInstance = messaging();
   const coins = useCoinStore(state => state.coins);
-  
+
   // Initialize interstitial ad
   const { isLoaded, load, show } = useInterstitialAd();
 
@@ -82,7 +92,7 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
       }
     };
     loadUserInfo();
-    
+
     // Load interstitial ad when profile screen opens
     if (Platform.OS === 'android') {
       load().catch(err => {
@@ -107,7 +117,7 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
   const handleLogout = async () => {
     try {
       setShowLogoutModal(false); // Close modal first if open
-      
+
       // Show interstitial ad before logging out if available
       if (Platform.OS === 'android' && isLoaded) {
         try {
@@ -284,7 +294,19 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
     }
   };
 
+  const handlePrivacyPress = () => {
+    Linking.openURL(PRIVACY_POLICY_URL).catch((err) => {
+      console.error('Error opening privacy policy:', err);
+      Toast.error('Could not open privacy policy');
+    });
+  };
 
+  const handleHelpSupport = () => {
+    Linking.openURL(HELP_SUPPORT_URL).catch((err) => {
+      console.error('Error opening help & support:', err);
+      Toast.error('Could not open help & support');
+    });
+  };
 
   return (
     <View className="flex-1 bg-[#111827]">
@@ -304,8 +326,8 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
 
         {/* Banner Ad at the top */}
         {Platform.OS === 'android' && (
-          <BannerAdComponent 
-            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} 
+          <BannerAdComponent
+            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
             containerStyle={{ marginVertical: 8 }}
           />
         )}
@@ -342,8 +364,8 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center">
                 <View className="bg-yellow-500/20 p-2 rounded-xl">
-                  <Image 
-                    source={coinImage} 
+                  <Image
+                    source={coinImage}
                     className="w-6 h-6"
                     resizeMode="contain"
                   />
@@ -359,27 +381,39 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
             <Text className="text-white/90 text-lg font-semibold mb-4 px-1">
               Settings
             </Text>
-            <SettingItem icon="account-edit" title="Edit Profile" onPress={handleEditProfile} />
-            <SettingItem
-              icon="bell-ring"
-              title="Test Notifications"
-              onPress={testNotifications}
+            <SettingItem 
+              icon="account-edit" 
+              title="Edit Profile" 
+              onPress={handleEditProfile}
+              description="Update your name and profile picture" 
             />
+
             <SettingItem
               icon="bell-outline"
               title="Notifications"
               onPress={handleNotificationToggle}
+              description="Manage app notifications and preferences"
               rightElement={
                 <Switch
                   value={notificationsEnabled}
                   onValueChange={handleNotificationToggle}
-                  trackColor={{ false: '#374151', true: '#4F46E5' }}
-                  thumbColor={notificationsEnabled ? '#818CF8' : '#9CA3AF'}
+                  trackColor={{ false: '#374151', true: '#EC4899' }}
+                  thumbColor={notificationsEnabled ? '#EC4899' : '#9CA3AF'}
                 />
               }
             />
-            <SettingItem icon="shield-check" title="Privacy" />
-            <SettingItem icon="help-circle" title="Help & Support" />
+            <SettingItem 
+              icon="shield-check" 
+              title="Privacy" 
+              onPress={handlePrivacyPress}
+              description="Review our data practices and policies" 
+            />
+            <SettingItem 
+              icon="help-circle" 
+              title="Help & Support" 
+              onPress={handleHelpSupport}
+              description="Get assistance and contact support" 
+            />
           </View>
 
           {/* Logout Button */}
@@ -453,21 +487,21 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
             </View>
 
             {/* Modal Actions */}
-            <View className="flex-row justify-end space-x-3">
+            <View className="flex-row justify-end gap-3">
               <TouchableOpacity
                 onPress={() => setShowEditModal(false)}
-                className="px-6 py-3 rounded-xl bg-white/10 flex-row items-center space-x-2"
+                className="px-6 py-3 rounded-xl bg-white/10 flex-row items-center gap-2"
               >
                 <Icon name="close" size={20} color="#fff" />
-                <Text className="text-white font-medium ml-2">Cancel</Text>
+                <Text className="text-white font-medium">Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleSaveProfile}
-                className="px-6 py-3 rounded-xl bg-indigo-500 flex-row items-center space-x-2"
+                className="px-6 py-3 rounded-xl bg-indigo-500 flex-row items-center gap-2"
               >
                 <Icon name="content-save" size={20} color="#fff" />
-                <Text className="text-white font-medium ml-2">Save</Text>
+                <Text className="text-white font-medium">Save</Text>
               </TouchableOpacity>
             </View>
           </View>

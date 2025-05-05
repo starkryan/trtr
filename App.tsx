@@ -1,21 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import "./global.css"
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import ToastManager, { Toast } from 'toastify-react-native';
+import ToastManager from 'toastify-react-native';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import './src/locales/i18n';
-import { StatusBar, StyleSheet, Platform, View, AppState, AppStateStatus } from 'react-native';
+import { StatusBar, StyleSheet, Platform, View, AppState, AppStateStatus, NativeModules } from 'react-native';
 import { navigationRef } from './src/utils/navigationService';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { AuthProvider } from './src/hooks/authContext';
 import messaging, { 
-  FirebaseMessagingTypes, 
-  getMessaging, 
-  onMessage,
-  getToken, 
-  requestPermission, 
-  setBackgroundMessageHandler 
-} from '@react-native-firebase/messaging';
+  FirebaseMessagingTypes} from '@react-native-firebase/messaging';
 import notifee, { AndroidImportance } from '@notifee/react-native';
 import NotificationService from './src/services/NotificationService';
 
@@ -25,29 +19,67 @@ import { useCoinStore } from './src/store/useCoinStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 import { getApp } from '@react-native-firebase/app';
-import { User } from 'firebase/auth';
-import { AppOpenAd, AdEventType, AdsConsent, AdsConsentStatus, MobileAds } from 'react-native-google-mobile-ads';
+import { MobileAds } from 'react-native-google-mobile-ads';
 import AdMobService from './src/services/AdMobService';
+
+
+
+// Define global type for our app-specific globals
+declare global {
+  var isEmulator: boolean;
+}
 
 // For React Native Firebase, the default app is automatically initialized
 const app = getApp();
 const messagingInstance = messaging();
 
+// Check if running in an emulator - this will help with debugging
+if (Platform.OS === 'android') {
+  // Get Android build properties to detect emulator
+  const { isEmulator } = NativeModules.DeviceInfo || {};
+  if (isEmulator) {
+    console.log('Running in Android Emulator - using test ad IDs');
+    // Set global flag to use in components
+    global.isEmulator = true;
+  } else {
+    console.log('Running on physical Android device');
+    global.isEmulator = false;
+    
+    // Log whether we're in development or production mode
+    if (__DEV__) {
+      console.log('Running in DEVELOPMENT mode - using test ad IDs');
+    } else {
+      console.log('Running in PRODUCTION mode - using REAL ad IDs');
+    }
+  }
+}
+
 // Register background handler correctly
 messaging().setBackgroundMessageHandler(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-  if (remoteMessage.notification) {
+  // Use data payload for content
+  const title = remoteMessage.data?.title;
+  const body = remoteMessage.data?.body;
+
+  // Ensure title and body are strings before displaying
+  if (typeof title === 'string' && typeof body === 'string') {
     await notifee.displayNotification({
-      title: remoteMessage.notification.title,
-      body: remoteMessage.notification.body,
+      title: title,
+      body: body,
       android: {
         channelId: 'default',
-        smallIcon: 'ic_notification',
+        smallIcon: 'ic_notification', // make sure this drawable exists
         color: '#EC4899',
+        sound: 'default',
+        vibrationPattern: [300, 500, 300, 500], // ON, OFF, ON, OFF pattern (ms)
+        importance: AndroidImportance.HIGH,
         pressAction: {
           id: 'default',
         },
       },
+      data: remoteMessage.data, // Pass along any other data
     });
+  } else {
+     console.warn("Received background message without title/body in data payload:", remoteMessage.data);
   }
 });
 
@@ -74,8 +106,8 @@ const App = () => {
   useEffect(() => {
     // Initialize Firebase Auth
     const auth = getAuth(app);
-    const unsubscribe = onAuthStateChanged(auth, (user: User) => {
-      setFirebaseInitialized(true);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseInitialized(!!user);
     });
 
     return unsubscribe;
@@ -87,6 +119,10 @@ const App = () => {
       if (Platform.OS !== 'android' && Platform.OS !== 'ios') return;
       
       try {
+        // Initialize MobileAds SDK first with the app ID
+        await MobileAds().initialize();
+        console.log('MobileAds SDK initialized successfully');
+        
         // Initialize AdMob service (which handles the SDK initialization)
         const adMobService = AdMobService.getInstance();
         await adMobService.initialize();
@@ -111,16 +147,18 @@ const App = () => {
           // });
         });
         
-        // Preload an app open ad for use when returning to the app
+        // Preload all ad types
         await adMobService.loadAppOpenAd(() => {
           console.log('App open ad closed');
           // Load the next one after this one closes
           adMobService.loadAppOpenAd();
         });
         
+        // The AdMobService will automatically preload all ad types during initialization
+        
         setAdsInitialized(true);
         setAppOpenAdReady(true);
-        console.log('AdMob initialized successfully');
+        console.log('AdMob initialized successfully with all ad units');
       } catch (error) {
         console.error('Failed to initialize AdMob:', error);
       }
@@ -154,25 +192,36 @@ const App = () => {
             importance: AndroidImportance.HIGH,
             sound: 'default',
             vibration: true,
+            vibrationPattern: [300, 500, 300, 500], // ON, OFF, ON, OFF pattern (ms)
             badge: true
           });
 
           // Set up foreground message handler
           const unsubscribe = messaging().onMessage(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-            if (remoteMessage.notification) {
+            // Use data payload for content
+            const title = remoteMessage.data?.title;
+            const body = remoteMessage.data?.body;
+
+            // Ensure title and body are strings before displaying
+            if (typeof title === 'string' && typeof body === 'string') {
               await notifee.displayNotification({
-                title: remoteMessage.notification.title,
-                body: remoteMessage.notification.body,
+                title: title,
+                body: body,
                 android: {
                   channelId: 'default',
-                  smallIcon: 'ic_notification',
+                  smallIcon: 'ic_notification', // make sure this drawable exists
                   color: '#EC4899',
+                  sound: 'default',
+                  vibrationPattern: [300, 500, 300, 500], // ON, OFF, ON, OFF pattern (ms)
+                  importance: AndroidImportance.HIGH,
                   pressAction: {
                     id: 'default',
                   },
                 },
-                data: remoteMessage.data,
+                data: remoteMessage.data, // Pass along any other data
               });
+            } else {
+               console.warn("Received foreground message without title/body in data payload:", remoteMessage.data);
             }
           });
 
@@ -247,17 +296,20 @@ const App = () => {
     setShowSplash(false);
     
     // Show app open ad when splash screen finishes (if on Android)
-    if (Platform.OS === 'android' && adsInitialized) {
+    if (Platform.OS === 'android' && adsInitialized && appOpenAdReady) {
       // Add a slight delay to ensure the app is fully loaded before showing ad
       setTimeout(() => {
+        console.log('Attempting to show app open ad after splash screen...');
         AdMobService.getInstance().showAppOpenAd().then(shown => {
           if (!shown) {
-            console.log('App open ad not available to show');
+            console.log('App open ad not available to show after splash');
+          } else {
+            console.log('App open ad shown successfully after splash');
           }
         }).catch(err => {
-          console.log('Failed to show app open ad:', err);
+          console.log('Failed to show app open ad after splash:', err);
         });
-      }, 1000);
+      }, 2000); // Longer delay to ensure everything is ready
     }
   };
 
@@ -273,12 +325,21 @@ const App = () => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
         // App is going to background, clean up resources
+        console.log('App going to background, cleaning up ad resources');
         AdMobService.getInstance().cleanup();
       } else if (nextAppState === 'active') {
-        // App is coming to foreground, reinitialize if needed
+        // App is coming to foreground, reinitialize and potentially show ad
+        console.log('App returning to foreground');
         if (adsInitialized) {
+          console.log('Reinitializing ads after returning to foreground');
           // Just reinitialize when returning to the app - this handles cache refresh internally
-          AdMobService.getInstance().initialize();
+          AdMobService.getInstance().initialize().then(() => {
+            // Show app open ad when returning to the app (with probability to avoid annoying users)
+            if (Math.random() < 0.3) { // 30% chance to show ad when returning to app
+              console.log('Attempting to show app open ad after app return');
+              AdMobService.getInstance().showAppOpenAd();
+            }
+          });
         }
       }
     };

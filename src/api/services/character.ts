@@ -39,6 +39,7 @@ export interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
+  replyTo?: Message; // Optional reference to the message being replied to
 }
 
 export interface ChatRequest {
@@ -60,4 +61,3 @@ export const sendMessageToCharacter = async (chatRequest: ChatRequest) => {
     throw error;
   }
 };
-

@@ -330,15 +330,17 @@ export const InboxScreen: React.FC<TabScreenProps<'Inbox'>> = ({ navigation }) =
             data={conversations}
             renderItem={renderConversation}
             keyExtractor={item => item.character.id}
-            contentContainerStyle={{ 
+            contentContainerStyle={{
+              flexGrow: 1,
               paddingHorizontal: 16,
-              paddingTop: 8,
+              paddingTop: 12,
               paddingBottom: Platform.OS === 'ios' ? 
-                20 + insets.bottom : 
-                20
+                100 + Math.min(insets.bottom, 20) : 
+                120 + Math.min(insets.bottom, 15)
             }}
+            showsVerticalScrollIndicator={true}
+            indicatorStyle="white"
             ListEmptyComponent={renderEmptyList}
-            showsVerticalScrollIndicator={false}
           />
         )}
 

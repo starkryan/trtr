@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, Dimensions, StatusBar, RefreshControl, ActivityIndicator, ScrollView, Platform } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, Dimensions, StatusBar, RefreshControl, ActivityIndicator, ScrollView, Platform, ViewStyle, StyleProp } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { getCharacters } from '../../api/services';
 import Ionicons from 'react-native-vector-icons/MaterialIcons';
 import Toast from "toastify-react-native"
 import { TabScreenProps } from '../../navigation/types';
 import BannerAdComponent from '../../components/ads/BannerAdComponent';
+import NativeAdComponent from '../../components/ads/NativeAdComponent';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
-import Svg, { Path, Line } from 'react-native-svg';
 
 
 
@@ -207,6 +208,75 @@ const renderProfileCard = (profile: Profile, onPress: (profile: Profile) => void
   );
 };
 
+const ProfileSkeletonLoader = () => {
+  const skeletonCards = Array(6).fill(null);
+  return (
+    <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+        {skeletonCards.map((_, index) => (
+          <View 
+            key={index}
+            style={{
+              width: CARD_WIDTH,
+              marginBottom: 16,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+              overflow: 'hidden'
+            }}
+          >
+            <SkeletonPlaceholder 
+              backgroundColor="#2A2A2A"
+              highlightColor="#3D3D3D"
+              speed={1200}
+            >
+              <SkeletonPlaceholder.Item 
+                width={CARD_WIDTH} 
+                height={CARD_WIDTH * 1.4}
+                borderRadius={16}
+              >
+                <SkeletonPlaceholder.Item
+                  position="absolute"
+                  bottom={12}
+                  left={12}
+                  right={12}
+                >
+                  {/* Name and Age */}
+                  <SkeletonPlaceholder.Item 
+                    flexDirection="row" 
+                    justifyContent="space-between"
+                    alignItems="center"
+                    marginBottom={8}
+                  >
+                    <SkeletonPlaceholder.Item width={80} height={20} borderRadius={4} />
+                    <SkeletonPlaceholder.Item width={30} height={20} borderRadius={4} />
+                  </SkeletonPlaceholder.Item>
+
+                  {/* Tags */}
+                  <SkeletonPlaceholder.Item 
+                    flexDirection="row" 
+                    alignItems="center"
+                    gap={8}
+                  >
+                    <SkeletonPlaceholder.Item width={70} height={24} borderRadius={12} />
+                    <SkeletonPlaceholder.Item width={60} height={24} borderRadius={12} />
+                  </SkeletonPlaceholder.Item>
+                </SkeletonPlaceholder.Item>
+              </SkeletonPlaceholder.Item>
+            </SkeletonPlaceholder>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+// Define types for grid items
+type GridItem = 
+  | { type: 'profile'; data: Profile; id: string }
+  | { type: 'nativeAd'; id: string }
+  | { type: 'dummy'; id: string; data: Profile };
+
 const ProfileGrid = ({ profiles, onProfilePress, loading, onRefresh, selectedTab, setSelectedTab, tabs }: { 
   profiles: Profile[]; 
   onProfilePress: (profile: Profile) => void;
@@ -226,37 +296,105 @@ const ProfileGrid = ({ profiles, onProfilePress, loading, onRefresh, selectedTab
   };
 
   if (loading && profiles.length === 0) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#EC4899" />
-        <Text className="text-white/80 mt-4 font-medium">Loading amazing characters...</Text>
-      </View>
-    );
+    return <ProfileSkeletonLoader />;
   }
+
+  // Create a modified data array that includes profiles and ad items at specific positions
+  const processedData: GridItem[] = [];
+  
+  // Insert profiles and strategic ad placements
+  profiles.forEach((profile, index) => {
+    processedData.push({ type: 'profile', data: profile, id: profile.id });
+    
+    // Show ad after every 6th profile for less intrusive experience
+    if ((index + 1) % 6 === 0 && index > 0) {
+      processedData.push({ 
+        type: 'nativeAd', 
+        id: `native-ad-${Math.floor(index/6)}` 
+      });
+    }
+  });
+
+  // Ensure grid alignment with dummy items if needed
+  if (processedData.length % 2 !== 0) {
+    processedData.push({ 
+      type: 'dummy', 
+      id: 'dummy-spacer',
+      data: {} as Profile
+    } as any);
+  }
+
+  // Define the column wrapper style
+  const columnWrapperStyle: ViewStyle = {
+    justifyContent: 'space-between',
+    paddingHorizontal: 8
+  };
 
   return (
     <FlatList
-      data={profiles}
-      renderItem={({ item: profile, index }) => (
-        <Animated.View
-          entering={FadeInDown.delay(index * 100)}
-          className="mb-4"
-        >
-          {renderProfileCard(profile, onProfilePress)}
-        </Animated.View>
-      )}
+      data={processedData}
+      renderItem={({ item, index }) => {
+        // Handle different item types
+        if (item.type === 'nativeAd') {
+          return (
+            <View style={{ 
+              width: '100%', 
+              marginVertical: 16,
+              paddingHorizontal: 16
+            }}>
+              <View style={{
+                width: '100%',
+                borderRadius: 20,
+                overflow: 'hidden',
+                borderWidth: 1,
+                borderColor: 'rgba(236, 72, 153, 0.2)', // Pink border to match theme
+                backgroundColor: 'rgba(17, 24, 39, 0.8)', // Darker background
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+                elevation: 5
+              }}>
+                <Animated.View
+                  entering={FadeInDown.duration(400).springify()}
+                >
+                  <NativeAdComponent 
+                    onAdLoaded={() => console.log('Native ad loaded in HomeScreen')}
+                    onAdFailedToLoad={(error) => console.error('Native ad failed to load:', error)}
+                  />
+                </Animated.View>
+              </View>
+            </View>
+          );
+        }
+        
+        // Skip rendering for dummy items
+        if (item.type === 'dummy') {
+          return <View style={{ width: CARD_WIDTH }} />;
+        }
+        
+        // Regular profile cards
+        return (
+          <Animated.View
+            entering={FadeInDown.delay(index * 50).duration(300)}
+            className="mb-4"
+            style={{ width: CARD_WIDTH }}
+          >
+            {item.type === 'profile' && renderProfileCard(item.data, onProfilePress)}
+          </Animated.View>
+        );
+      }}
       keyExtractor={(item) => item.id}
       numColumns={2}
-      columnWrapperStyle={{ 
-        justifyContent: 'space-between',
-        paddingHorizontal: 4
-      }}
+      columnWrapperStyle={columnWrapperStyle}
       contentContainerStyle={{ 
         paddingHorizontal: 12,
         paddingBottom: Platform.OS === 'ios' ?
           insets.bottom + 120 :
-          120 + Math.min(insets.bottom, 15)
+          120 + Math.min(insets.bottom, 15),
+        paddingTop: 4
       }}
+      ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
@@ -267,6 +405,7 @@ const ProfileGrid = ({ profiles, onProfilePress, loading, onRefresh, selectedTab
       }
       ListHeaderComponent={() => (
         <>
+          {/* Category Tabs */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -294,8 +433,8 @@ const ProfileGrid = ({ profiles, onProfilePress, loading, onRefresh, selectedTab
               </TouchableOpacity>
             ))}
           </ScrollView>
-          
-          {/* Add Banner ad below the tabs */}
+           
+          {/* Banner ad below the tabs - small and unobtrusive */}
           {Platform.OS === 'android' && (
             <BannerAdComponent
               size={BannerAdSize.BANNER}

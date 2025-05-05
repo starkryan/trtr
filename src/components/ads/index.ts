@@ -1,9 +1,9 @@
 import BannerAdComponent from './BannerAdComponent';
-import AdUsageExample from './AdUsageExample';
+import NativeAdComponent from './NativeAdComponent';
 
 export {
   BannerAdComponent,
-  AdUsageExample
+  NativeAdComponent
 };
 
 export * from '../../hooks/useAdMob'; 

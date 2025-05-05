@@ -5,7 +5,7 @@ import * as RNLocalize from 'react-native-localize';
 const resources = {
   en: {
     translation: {
-      welcome: 'Welcome to Chumzr',
+      welcome: 'Welcome to Luvsab',
       home: 'Home',
       inbox: 'Inbox',
       favorite: 'Favorite',
@@ -22,7 +22,7 @@ const resources = {
   },
   hi: {
     translation: {
-      welcome: 'चमज़र में आपका स्वागत है',
+      welcome: 'लवसब में आपका स्वागत है',
       home: 'होम',
       inbox: 'इनबॉक्स',
       favorite: 'पसंदीदा',
@@ -36,22 +36,22 @@ const resources = {
       error: 'त्रुटि',
       logout_error: 'लॉग आउट करने में विफल। कृपया पुनः प्रयास करें।',
     },
-    es: {
-      translation: {
-        welcome: 'Bienvenido a Chumzr',
-        home: 'Inicio',
-        inbox: 'Bandeja de entrada',
-        favorite: 'Favorito',
-        profile: 'Perfil',
-        device_id: 'ID del dispositivo',
-        get_started: 'Comenzar',
-        select_language: 'Seleccionar tu idioma',
-        logout: 'Cerrar sesión',
-        logout_confirm: '¿Estás seguro de querer cerrar sesión?',
-        cancel: 'Cancelar',
-        error: 'Error',
-        logout_error: 'Error al cerrar sesión. Por favor, inténtelo de nuevo.',
-      },
+  },
+  es: {
+    translation: {
+      welcome: 'Bienvenido a Luvsab',
+      home: 'Inicio',
+      inbox: 'Bandeja de entrada',
+      favorite: 'Favorito',
+      profile: 'Perfil',
+      device_id: 'ID del dispositivo',
+      get_started: 'Comenzar',
+      select_language: 'Seleccionar tu idioma',
+      logout: 'Cerrar sesión',
+      logout_confirm: '¿Estás seguro de querer cerrar sesión?',
+      cancel: 'Cancelar',
+      error: 'Error',
+      logout_error: 'Error al cerrar sesión. Por favor, inténtelo de nuevo.',
     },
   },
 };

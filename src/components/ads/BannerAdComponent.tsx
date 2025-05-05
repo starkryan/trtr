@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View, Platform, Text } from 'react-native';
 import { 
   BannerAd, 
   BannerAdSize, 
-  AdEventType,
-  PaidEvent
-} from 'react-native-google-mobile-ads';
+  PaidEvent} from 'react-native-google-mobile-ads';
 import { adUnitIds } from '../../services/AdMobService';
 import AdMobService from '../../services/AdMobService';
 
@@ -16,6 +14,7 @@ interface BannerAdComponentProps {
   onAdFailedToLoad?: (error: Error) => void;
   useSimulatorAdUnit?: boolean; // New prop to force simulator ad unit
   onAdRevenue?: (event: PaidEvent) => void; // Add callback for revenue events
+  showDebugButton?: boolean; // Add prop to control debug button visibility
 }
 
 /**
@@ -27,27 +26,44 @@ const BannerAdComponent: React.FC<BannerAdComponentProps> = ({
   onAdLoaded,
   onAdFailedToLoad,
   useSimulatorAdUnit = false,
-  onAdRevenue
+  onAdRevenue,
+  showDebugButton = false // Change default to false to hide debug buttons
 }) => {
   const [adLoaded, setAdLoaded] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [hideAdSpace, setHideAdSpace] = useState(false);
   const [retryAttempts, setRetryAttempts] = useState(0);
   const [adKey, setAdKey] = useState(0); // Used to force re-render
+  const [adError, setAdError] = useState<string | null>(null);
   
   const MAX_RETRY_ATTEMPTS = 2;
   
   // Determine which ad unit ID to use
   const getBannerAdUnitId = () => {
-    // In development, use simulator ad unit if requested (works in emulators)
-    if (__DEV__ && useSimulatorAdUnit) {
-      const id = adUnitIds.simulatorBanner;
-      console.log(`Using simulator banner ad ID: ${id}`);
-      return id;
+    // For development environment - use test ads
+    if (__DEV__) {
+      if (Platform.OS === 'android') {
+        // Use the specific Android test ID
+        const androidTestId = 'ca-app-pub-3940256099942544/6300978111';
+        console.log(`Using Android DEV test banner ad ID: ${androidTestId}`);
+        return androidTestId;
+      } else if (Platform.OS === 'ios') {
+        // Use the specific iOS test ID
+        const iOSTestId = 'ca-app-pub-3940256099942544/2934735716';
+        console.log(`Using iOS DEV test banner ad ID: ${iOSTestId}`);
+        return iOSTestId;
+      } else {
+        // Fallback for other platforms in DEV (shouldn't happen for mobile)
+        // Using the library's TestIds.BANNER here might still cause issues.
+        // It's better to return a known valid test ID or handle unsupported platforms.
+        console.warn('Unsupported platform for DEV test banner, returning Android test ID as fallback');
+        return 'ca-app-pub-3940256099942544/6300978111'; 
+      }
+    } else {
+      // For production, use the real ad unit ID from AdMobService
+      console.log(`Using production banner ad ID: ${adUnitIds.banner}`);
+      return adUnitIds.banner;
     }
-    const id = adUnitIds.banner;
-    console.log(`Using banner ad ID: ${id}`);
-    return id;
   };
   
   useEffect(() => {
@@ -149,6 +165,9 @@ const BannerAdComponent: React.FC<BannerAdComponentProps> = ({
         }}
         onPaid={handleAdRevenue}
       />
+      {__DEV__ && error && (
+        <Text style={styles.errorText}>{error.message}</Text>
+      )}
     </View>
   );
 };
@@ -163,6 +182,26 @@ const styles = StyleSheet.create({
   hidden: {
     height: 0,
     opacity: 0,
+  },
+  debugContainer: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  debugButton: {
+    backgroundColor: '#333',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  debugText: {
+    color: '#fff',
+    fontSize: 12,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 10,
+    marginTop: 4,
   }
 });
 
