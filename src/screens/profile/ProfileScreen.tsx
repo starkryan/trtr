@@ -18,6 +18,7 @@ import { useCoinStore } from '../../store/useCoinStore';
 import { useInterstitialAd } from '../../hooks/useAdMob';
 import BannerAdComponent from '../../components/ads/BannerAdComponent';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
+import { usePremium } from '../../hooks/usePremium';
 
 const DEFAULT_AVATAR = require('../../../assets/avatar.png');
 const coinImage = require('../../../assets/coin.png');
@@ -74,6 +75,7 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
   const insets = useSafeAreaInsets();
   const messagingInstance = messaging();
   const coins = useCoinStore(state => state.coins);
+  const { isPremium, loading: premiumLoading } = usePremium();
 
   // Initialize interstitial ad
   const { isLoaded, load, show } = useInterstitialAd();
@@ -117,8 +119,8 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
     try {
       setShowLogoutModal(false); // Close modal first if open
 
-      // Show interstitial ad before logging out if available
-      if (Platform.OS === 'android' && isLoaded) {
+      // Show interstitial ad before logging out if available and user is not premium
+      if (Platform.OS === 'android' && isLoaded && !isPremium) {
         try {
           await show();
           // Slight delay to allow ad to finish
@@ -254,8 +256,8 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
           </View>
         </View>
 
-        {/* Banner Ad at the top */}
-        {Platform.OS === 'android' && (
+        {/* Banner Ad at the top - only shown for non-premium users */}
+        {Platform.OS === 'android' && !isPremium && (
           <BannerAdComponent
             size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
             containerStyle={{ marginVertical: 8 }}
@@ -318,12 +320,25 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
               description="Update your name and profile picture" 
             />
 
-            <SettingItem 
-              icon="crown" 
-              title="Premium" 
-              onPress={() => navigation.navigate('Premium')}
-              description="Upgrade to premium for ad-free experience" 
-            />
+            {isPremium ? (
+              <SettingItem 
+                icon="crown" 
+                title="Premium Active" 
+                description="You have an active premium subscription" 
+                rightElement={
+                  <View className="bg-yellow-500 px-2 py-1 rounded-md">
+                    <Text className="text-white text-xs font-bold">ACTIVE</Text>
+                  </View>
+                }
+              />
+            ) : (
+              <SettingItem 
+                icon="crown" 
+                title="Premium" 
+                onPress={() => navigation.navigate('Premium', {})}
+                description="Upgrade to premium for ad-free experience" 
+              />
+            )}
 
             <SettingItem
               icon="bell-outline"
