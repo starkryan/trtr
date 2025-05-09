@@ -25,7 +25,9 @@ export type RootStackParamList = {
     characterBackground?: string;
   };
   Search: undefined;
-
+  Premium: {
+    fromOnboarding?: boolean;
+  };
 };
 
 // Screen props types
@@ -41,7 +43,7 @@ export type TabScreenProps<T extends keyof TabStackParamList> = CompositeScreenP
 
 declare global {
   namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList {}
+    interface RootParamList extends RootStackParamList { }
   }
 }
 

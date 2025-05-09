@@ -8,14 +8,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/authContext';
 import { MotiView } from 'moti';
 
-import { BannerAdSize } from 'react-native-google-mobile-ads';
 import Toast from "toastify-react-native"
 import Svg, { Path } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import { check, request, RESULTS } from 'react-native-permissions';
 import messaging from '@react-native-firebase/messaging';
 
 // Import background image
@@ -186,11 +185,8 @@ export const OnboardingScreen = () => {
         }
       } 
       
-      // Navigate to main app regardless of permission result
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Tabs' }],
-      });
+      // Navigate to the subscription screen instead of main app
+      navigation.navigate('Premium', { fromOnboarding: true });
     } catch (error) {
       console.error('Error during login:', error);
       setIsLoading(false);
@@ -219,7 +215,7 @@ export const OnboardingScreen = () => {
           transition={{ type: 'timing', duration: 800, delay: 300 }}
         >
           <View className="flex-row items-center justify-center mb-4">
-            <Text className="text-6xl">❤️</Text>
+            <Text className="text-6xl">💖</Text>
             <Text className="text-8xl font-bold text-pink-500">sab</Text>
           </View>
 

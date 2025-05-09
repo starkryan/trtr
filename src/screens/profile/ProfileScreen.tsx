@@ -10,7 +10,6 @@ import Toast from 'toastify-react-native';
 import NotificationService from '../../services/NotificationService';
 import { check, request, RESULTS, openSettings, Permission } from 'react-native-permissions';
 import messaging, {
-  FirebaseMessagingTypes,
   getToken
 } from '@react-native-firebase/messaging';
 import { TabScreenProps } from '../../navigation/types';
@@ -164,76 +163,7 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
     }
   };
 
-  const testNotifications = async () => {
-    try {
-      // First check if we have permission
-      const permissionStatus = await notificationService.getPermissionStatus();
-      if (!permissionStatus.granted) {
-        Toast.error('Please enable notifications first');
-        return;
-      }
-
-      // Test basic notification
-      const success = await notificationService.displayNotification(
-        'Test Notification',
-        'This is a test notification from profile settings!',
-        {
-          android: {
-            channelId: 'default',
-            smallIcon: 'ic_notification',
-            color: '#EC4899',
-            importance: 4,
-            priority: 'high',
-            vibrate: true,
-            pressAction: {
-              id: 'default'
-            }
-          }
-        }
-      );
-
-      if (success) {
-        Toast.success('Test notification sent!');
-      } else {
-        Toast.error('Failed to send notification');
-        return;
-      }
-
-      // Test notification with data after 2 seconds
-      setTimeout(async () => {
-        const dataSuccess = await notificationService.displayNotificationWithData(
-          'Test Notification with Data',
-          'This notification contains custom data!',
-          {
-            screen: 'Profile',
-            id: '123',
-            type: 'message',
-            android: {
-              channelId: 'default',
-              smallIcon: 'ic_notification',
-              color: '#EC4899',
-              importance: 4,
-              priority: 'high',
-              vibrate: true,
-              pressAction: {
-                id: 'default'
-              }
-            }
-          }
-        );
-
-        if (dataSuccess) {
-          Toast.success('Data notification sent!');
-        } else {
-          Toast.error('Failed to send data notification');
-        }
-      }, 2000);
-
-    } catch (error) {
-      console.error('Error sending test notifications:', error);
-      Toast.error('Failed to send test notifications');
-    }
-  };
+ 
 
   const handleNotificationToggle = async () => {
     try {
@@ -265,7 +195,7 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
           setNotificationsEnabled(true);
           // Use modular API for Firebase Cloud Messaging
           const fcmToken = await getToken(messagingInstance);
-          console.log('FCM Token:', fcmToken);
+
           Toast.success('Notifications enabled');
         } else {
           setNotificationsEnabled(false);
@@ -289,7 +219,7 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
         );
       }
     } catch (error) {
-      console.error('Error toggling notifications:', error);
+      // console.error('Error toggling notifications:', error);
       Toast.error('Failed to toggle notifications');
     }
   };
@@ -386,6 +316,13 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
               title="Edit Profile" 
               onPress={handleEditProfile}
               description="Update your name and profile picture" 
+            />
+
+            <SettingItem 
+              icon="crown" 
+              title="Premium" 
+              onPress={() => navigation.navigate('Premium')}
+              description="Upgrade to premium for ad-free experience" 
             />
 
             <SettingItem

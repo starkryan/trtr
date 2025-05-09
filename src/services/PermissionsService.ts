@@ -7,7 +7,6 @@ import {
   checkMultiple,
   requestMultiple,
   Permission,
-  PermissionStatus,
 } from 'react-native-permissions';
 
 class PermissionsService {

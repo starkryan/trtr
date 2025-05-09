@@ -194,38 +194,8 @@ class AdMobService {
     try {
       if (this.adsInitialized) return;
       
-      console.log('Initializing AdMob SDK...');
-      
-      // Register test device before initialization
-      if (ENABLE_TEST_MODE) {
-        await MobileAds().setRequestConfiguration({
-          // Use specific settings for emulators and test devices
-          testDeviceIdentifiers: [
-            // Standard emulator IDs
-            Platform.OS === 'android' ? 'EMULATOR' : 'Simulator',
-            // Alternative form that sometimes works better on Android emulators
-            'emulator',
-            // Legacy Android emulator ID used in some Google examples
-            '01234567890123456789',
-            // Custom device ID if registered in AdMob console
-            'bfb5eed9-87c7-4fd0-be9e-117bd7629a35',
-          ],
-        });
-        console.log('AdMob test devices registered');
-      }
-      
       // Initialize MobileAds SDK
       await MobileAds().initialize();
-      console.log('MobileAds SDK initialized with app ID:', defaultAppId);
-      
-      // Log configured ad units
-      console.log('Configured ad units:');
-      console.log(`- App Open (${adUnitNames.appOpen}): ${adUnitIds.appOpen}`);
-      console.log(`- Banner (${adUnitNames.banner}): ${adUnitIds.banner}`);
-      console.log(`- Interstitial (${adUnitNames.interstitial}): ${adUnitIds.interstitial}`);
-      console.log(`- Native (${adUnitNames.native}): ${adUnitIds.native}`);
-      console.log(`- Rewarded (${adUnitNames.rewarded}): ${adUnitIds.rewarded}`);
-      console.log(`- Rewarded Interstitial (${adUnitNames.rewardedInterstitial}): ${adUnitIds.rewardedInterstitial}`);
       
       // Initialize or preload ads in parallel
       await this.preloadAdsInParallel();
@@ -234,11 +204,8 @@ class AdMobService {
       this.setupBackgroundPreloading();
       
       this.adsInitialized = true;
-      console.log('AdMob service initialized successfully');
-      
     } catch (err) {
-      console.error('Error initializing AdMob:', err);
-      // Continue without ads
+      // Error handling without console.error
     }
   }
 
@@ -246,8 +213,6 @@ class AdMobService {
    * Preload all ad types in parallel to speed up initial loading
    */
   private async preloadAdsInParallel(): Promise<void> {
-    console.log('Starting parallel ad preloading...');
-    
     // Create an array of preload promises to run in parallel
     const preloadPromises = [
       this.loadAppOpenAd(), // Critical - often shown first
@@ -259,9 +224,8 @@ class AdMobService {
     // Wait for all to complete, but don't let errors stop others
     try {
       await Promise.allSettled(preloadPromises);
-      console.log('Initial parallel ad preloading complete');
     } catch (error) {
-      console.warn('Some ads failed to preload:', error);
+      // Error handling without console.error
     }
   }
 
@@ -284,8 +248,6 @@ class AdMobService {
    * Check ad cache status and refresh ads as needed
    */
   private async checkAndRefreshAdCache(): Promise<void> {
-    console.log('Checking ad cache status...');
-    
     const tasks = [];
     
     // Check if app open ad is stale or missing
@@ -298,7 +260,6 @@ class AdMobService {
       tasks.push(this.preloadInterstitialAd());
     } else if (this.interstitialCache.hasExpiredAds()) {
       // If we have expired ads, refresh one
-      console.log('Clearing expired interstitial ads and removing listeners...');
       // @ts-ignore - Accessing private member for cleanup
       this.interstitialCache.ads.forEach(({ ad }) => ad.removeAllListeners());
       this.interstitialCache.clear();
@@ -310,7 +271,6 @@ class AdMobService {
       tasks.push(this.preloadRewardedAd());
     } else if (this.rewardedCache.hasExpiredAds()) {
       // If we have expired ads, refresh one
-      console.log('Clearing expired rewarded ads and removing listeners...');
       // @ts-ignore - Accessing private member for cleanup
       this.rewardedCache.ads.forEach(({ ad }) => ad.removeAllListeners());
       this.rewardedCache.clear();
@@ -322,7 +282,6 @@ class AdMobService {
       tasks.push(this.preloadRewardedInterstitialAd());
     } else if (this.rewardedInterstitialCache.hasExpiredAds()) {
       // If we have expired ads, refresh one
-      console.log('Clearing expired rewarded interstitial ads and removing listeners...');
       // @ts-ignore - Accessing private member for cleanup
       this.rewardedInterstitialCache.ads.forEach(({ ad }) => ad.removeAllListeners());
       this.rewardedInterstitialCache.clear();
@@ -331,10 +290,7 @@ class AdMobService {
     
     // Run refresh tasks in parallel
     if (tasks.length > 0) {
-      console.log(`Refreshing ${tasks.length} ad types...`);
       await Promise.allSettled(tasks);
-    } else {
-      console.log('Ad cache is healthy, no refresh needed');
     }
   }
 
@@ -351,7 +307,6 @@ class AdMobService {
         debugGeography: __DEV__ ? 1 : 0, // EEA for testing in debug mode
         testDeviceIdentifiers: __DEV__ ? ['bfb5eed9-87c7-4fd0-be9e-117bd7629a35'] : [],
       }).catch(error => {
-        console.warn('Consent info update failed, using default consent settings:', error);
         return { status: AdsConsentStatus.NOT_REQUIRED, isConsentFormAvailable: false };
       });
       
@@ -361,7 +316,6 @@ class AdMobService {
           this.consentStatus = formResult.status;
           return formResult.status;
         } catch (formError) {
-          console.warn('Failed to show consent form:', formError);
           this.consentStatus = AdsConsentStatus.NOT_REQUIRED;
           return AdsConsentStatus.NOT_REQUIRED;
         }
@@ -370,7 +324,6 @@ class AdMobService {
       this.consentStatus = consentInfo.status;
       return consentInfo.status;
     } catch (error) {
-      console.error('Error initializing consent:', error);
       this.consentStatus = AdsConsentStatus.NOT_REQUIRED;
       return AdsConsentStatus.NOT_REQUIRED;
     }
@@ -393,7 +346,6 @@ class AdMobService {
     
     // If we've exceeded retry attempts, don't try to load another one
     if (this.appOpenAdErrorCount >= this.maxRetryAttempts) {
-      console.log('Exceeded maximum retry attempts for app open ad, not loading');
       // Reset error count after some time to allow retries later
       setTimeout(() => this.appOpenAdErrorCount = 0, 30 * 60 * 1000); // Reset after 30 minutes
       return;
@@ -401,20 +353,17 @@ class AdMobService {
     
     // If an ad is already loading, don't start another load
     if (this.isAppOpenAdLoading) {
-      console.log('App open ad is already loading, skipping this request');
       return;
     }
     
     // If an ad is already available and not expired, don't load another one
     if (this.isAppOpenAdAvailable()) {
-      console.log('App open ad is already available, no need to load');
       return;
     }
     
     this.isAppOpenAdLoading = true;
     
     try {
-      console.log('Loading app open ad...');
       // Clean up any existing ad
       if (this.appOpenAd) {
         this.appOpenAd.removeAllListeners();
@@ -423,7 +372,6 @@ class AdMobService {
       
       // Use adUnitIds.appOpen instead of always using test IDs
       const adUnitId = adUnitIds.appOpen;
-      console.log(`Using app open ad unit ID: ${adUnitId}`);
       
       this.appOpenAd = AppOpenAd.createForAdRequest(adUnitId, {
         ...defaultRequestOptions,
@@ -434,11 +382,9 @@ class AdMobService {
         this.isAppOpenAdLoading = false;
         this.appOpenAdLoadTime = Date.now();
         this.appOpenAdErrorCount = 0; // Reset error count on successful load
-        console.log('App open ad loaded successfully');
       });
       
       const closedListener = this.appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
-        console.log('App open ad closed');
         if (onAdDismissed) onAdDismissed();
         // Clean up listeners
         loadedListener();
@@ -451,7 +397,6 @@ class AdMobService {
       });
 
       const errorListener = this.appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
-        console.error('App open ad failed to load:', error);
         this.isAppOpenAdLoading = false;
         this.appOpenAdErrorCount++;
         
@@ -464,7 +409,6 @@ class AdMobService {
         if (error.message && error.message.includes('no-fill') && this.appOpenAdErrorCount < this.maxRetryAttempts) {
           // Exponential backoff for retries (2^n * 1000ms)
           const retryDelay = Math.pow(2, this.appOpenAdErrorCount) * 1000;
-          console.log(`Will retry loading app open ad after ${retryDelay}ms (attempt ${this.appOpenAdErrorCount}/${this.maxRetryAttempts})`);
           
           setTimeout(() => {
             this.loadAppOpenAd(onAdDismissed);
@@ -480,11 +424,9 @@ class AdMobService {
       
       // Start the load
       await this.appOpenAd.load();
-      console.log('App open ad load request sent');
     } catch (error) {
       this.isAppOpenAdLoading = false;
       this.appOpenAdErrorCount++;
-      console.error('Failed to load app open ad:', error);
     }
   }
 
@@ -494,29 +436,23 @@ class AdMobService {
    */
   public async showAppOpenAd(): Promise<boolean> {
     if (!this.isAppOpenAdAvailable()) {
-      console.log('No app open ad available to show');
       // If no ad is available, try loading one for next time
       this.loadAppOpenAd();
       return false;
     }
     
     try {
-      console.log('Showing app open ad...');
       if (!this.appOpenAd) {
-        console.log('App open ad instance is null despite availability check');
         return false;
       }
       
       if (!this.appOpenAd.loaded) {
-        console.log('App open ad is not loaded despite availability check');
         return false;
       }
       
       await this.appOpenAd.show();
-      console.log('App open ad show() called successfully');
       return true;
     } catch (error) {
-      console.error('Failed to show app open ad:', error);
       // Clean up this failed ad instance
       if (this.appOpenAd) {
         this.appOpenAd.removeAllListeners();
@@ -541,7 +477,6 @@ class AdMobService {
       (Math.random() < 0.33);
       
     if (forceRefresh && this.interstitialCache.hasAds()) {
-      console.log('Forcing fresh interstitial ad, removing listeners and clearing cache...');
       // @ts-ignore - Accessing private member for cleanup
       this.interstitialCache.ads.forEach(({ ad }) => ad.removeAllListeners());
       this.interstitialCache.clear();
@@ -550,8 +485,6 @@ class AdMobService {
     // First try to get from cache
     const cachedAd = this.interstitialCache.get();
     if (cachedAd) {
-      console.log('Using cached interstitial ad');
-      
       // Start preloading a replacement in the background
       setTimeout(() => this.preloadInterstitialAd(), 0);
       
@@ -559,7 +492,6 @@ class AdMobService {
     }
     
     // If not in cache, load a new one
-    console.log('No cached interstitial ad, loading on demand');
     return new Promise((resolve, reject) => {
       // Add a random component to help with ad rotation
       const requestOptions = {
@@ -579,13 +511,11 @@ class AdMobService {
       );
       
       const loadedListener = interstitial.addAdEventListener(AdEventType.LOADED, () => {
-        console.log('New interstitial ad loaded on demand');
         loadedListener();
         resolve(interstitial);
       });
       
       const errorListener = interstitial.addAdEventListener(AdEventType.ERROR, (error) => {
-        console.error('Failed to load interstitial ad on demand:', error);
         errorListener();
         reject(error);
       });
@@ -608,8 +538,6 @@ class AdMobService {
     this.interstitialCache.setLoading(true);
     
     try {
-      console.log('Preloading interstitial ad...');
-      
       // Add a random component to help with ad rotation
       const requestOptions = {
         ...defaultRequestOptions,
@@ -629,7 +557,6 @@ class AdMobService {
       
       const loadPromise = new Promise<void>((resolve, reject) => {
         const loadedListener = interstitial.addAdEventListener(AdEventType.LOADED, () => {
-          console.log('Interstitial ad preloaded successfully');
           loadedListener();
           errorListener();
           this.interstitialCache.add(interstitial);
@@ -638,7 +565,6 @@ class AdMobService {
         });
         
         const errorListener = interstitial.addAdEventListener(AdEventType.ERROR, (error) => {
-          console.warn('Failed to preload interstitial ad:', error);
           loadedListener();
           errorListener();
           this.interstitialCache.setLoading(false);
@@ -662,7 +588,6 @@ class AdMobService {
       }
     } catch (error) {
       this.interstitialCache.setLoading(false);
-      console.error('Error in interstitial preloading:', error);
     }
   }
 
@@ -675,24 +600,18 @@ class AdMobService {
       
       // Set up closed listener to preload the next ad
       const closedListener = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
-        console.log('Interstitial ad closed');
         closedListener();
         
         // Queue up next preload after ad is closed
         setTimeout(() => {
-          // Clear cache after showing to get fresh ads next time - REMOVED
-          // this.interstitialCache.clear(); 
           this.preloadInterstitialAd();
         }, 1000);
       });
       
       // Show the ad
-      console.log('Showing interstitial ad...');
       await interstitial.show();
       return true;
     } catch (error) {
-      console.error('Failed to show interstitial ad:', error);
-      
       // Try to preload for next time
       setTimeout(() => this.preloadInterstitialAd(), 5000);
       
@@ -713,7 +632,6 @@ class AdMobService {
       (Math.random() < 0.33);
       
     if (forceRefresh && this.rewardedCache.hasAds()) {
-      console.log('Forcing fresh rewarded ad, removing listeners and clearing cache...');
       // @ts-ignore - Accessing private member for cleanup
       this.rewardedCache.ads.forEach(({ ad }) => ad.removeAllListeners());
       this.rewardedCache.clear();
@@ -722,8 +640,6 @@ class AdMobService {
     // First try to get from cache if not forcing refresh
     const cachedAd = this.rewardedCache.get();
     if (cachedAd) {
-      console.log('Using cached rewarded ad');
-      
       // Start preloading a replacement in the background
       setTimeout(() => this.preloadRewardedAd(), 0);
       
@@ -731,7 +647,6 @@ class AdMobService {
     }
     
     // If not in cache, load a new one
-    console.log('No cached rewarded ad, loading on demand');
     return new Promise((resolve, reject) => {
       // Add a random query parameter to help with ad rotation
       const requestOptions = {
@@ -751,13 +666,11 @@ class AdMobService {
       );
       
       const loadedListener = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
-        console.log('New rewarded ad loaded on demand');
         loadedListener();
         resolve(rewarded);
       });
       
       const errorListener = rewarded.addAdEventListener(AdEventType.ERROR, (error) => {
-        console.error('Failed to load rewarded ad on demand:', error);
         errorListener();
         reject(error);
       });
@@ -780,8 +693,6 @@ class AdMobService {
     this.rewardedCache.setLoading(true);
     
     try {
-      console.log('Preloading rewarded ad...');
-      
       // Add a random component to help with ad rotation
       const requestOptions = {
         ...defaultRequestOptions,
@@ -801,7 +712,6 @@ class AdMobService {
       
       const loadPromise = new Promise<void>((resolve, reject) => {
         const loadedListener = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
-          console.log('Rewarded ad preloaded successfully');
           loadedListener();
           errorListener();
           this.rewardedCache.add(rewarded);
@@ -810,7 +720,6 @@ class AdMobService {
         });
         
         const errorListener = rewarded.addAdEventListener(AdEventType.ERROR, (error) => {
-          console.warn('Failed to preload rewarded ad:', error);
           loadedListener();
           errorListener();
           this.rewardedCache.setLoading(false);
@@ -834,7 +743,6 @@ class AdMobService {
       }
     } catch (error) {
       this.rewardedCache.setLoading(false);
-      console.error('Error in rewarded preloading:', error);
     }
   }
 
@@ -867,7 +775,6 @@ class AdMobService {
         const earnedRewardListener = rewarded.addAdEventListener(
           RewardedAdEventType.EARNED_REWARD,
           (reward) => {
-            console.log('User earned reward:', reward);
             earned = true;
             rewardItem = reward; // Store the reward to use when ad closes
             // Don't resolve here, wait for the ad to close
@@ -877,7 +784,6 @@ class AdMobService {
 
         // Set up closed listener to preload the next ad
         const closedListener = rewarded.addAdEventListener(AdEventType.CLOSED, () => {
-          console.log('Rewarded ad closed, reward earned:', earned);
           adClosed = true;
           
           // Only resolve after the ad closes
@@ -891,15 +797,12 @@ class AdMobService {
           
           // Queue up next preload after ad is closed
           setTimeout(() => {
-            // Clear cache after showing to get fresh ads next time - REMOVED
-            // this.rewardedCache.clear();
             this.preloadRewardedAd();
           }, 1000);
         });
 
         // Set up error listener
         const errorListener = rewarded.addAdEventListener(AdEventType.ERROR, (error) => {
-          console.error('Error showing or during rewarded ad:', error);
           if (!adClosed) { // Only reject if not already closed
             cleanupListeners();
             reject(error); // Reject the promise on error
@@ -908,21 +811,16 @@ class AdMobService {
 
         // Add loading listener to track when ad actually starts
         const loadingListener = rewarded.addAdEventListener(AdEventType.LOADED, () => {
-          console.log('Rewarded ad loaded and ready to show');
           loadingListener(); // Remove this listener right away
         });
 
         // Show the ad
-        console.log('Attempting to show rewarded ad...');
         rewarded.show().catch((showError) => {
-          console.error('Error calling rewarded.show():', showError);
           cleanupListeners();
           reject(showError);
         });
       });
     } catch (error) {
-      console.error('Failed to get or show rewarded ad:', error);
-
       // Try to preload for next time if getting/showing failed
       setTimeout(() => this.preloadRewardedAd(), 5000);
 
@@ -937,8 +835,6 @@ class AdMobService {
     // First try to get from cache
     const cachedAd = this.rewardedInterstitialCache.get();
     if (cachedAd) {
-      console.log('Using cached rewarded interstitial ad');
-      
       // Start preloading a replacement in the background
       setTimeout(() => this.preloadRewardedInterstitialAd(), 0);
       
@@ -946,7 +842,6 @@ class AdMobService {
     }
     
     // If not in cache, load a new one
-    console.log('No cached rewarded interstitial ad, loading on demand');
     return new Promise((resolve, reject) => {
       const rewardedInterstitial = RewardedInterstitialAd.createForAdRequest(
         adUnitIds.rewardedInterstitial,
@@ -984,7 +879,6 @@ class AdMobService {
     this.rewardedInterstitialCache.setLoading(true);
     
     try {
-      console.log('Preloading rewarded interstitial ad...');
       const rewardedInterstitial = RewardedInterstitialAd.createForAdRequest(
         adUnitIds.rewardedInterstitial,
         {
@@ -995,7 +889,6 @@ class AdMobService {
       
       const loadPromise = new Promise<void>((resolve, reject) => {
         const loadedListener = rewardedInterstitial.addAdEventListener(RewardedAdEventType.LOADED, () => {
-          console.log('Rewarded interstitial ad preloaded successfully');
           loadedListener();
           errorListener();
           this.rewardedInterstitialCache.add(rewardedInterstitial);
@@ -1004,7 +897,6 @@ class AdMobService {
         });
         
         const errorListener = rewardedInterstitial.addAdEventListener(AdEventType.ERROR, (error) => {
-          console.warn('Failed to preload rewarded interstitial ad:', error);
           loadedListener();
           errorListener();
           this.rewardedInterstitialCache.setLoading(false);
@@ -1022,7 +914,6 @@ class AdMobService {
       await loadPromise;
     } catch (error) {
       this.rewardedInterstitialCache.setLoading(false);
-      console.error('Error in rewarded interstitial preloading:', error);
     }
   }
 
@@ -1070,8 +961,6 @@ class AdMobService {
         });
       });
     } catch (error) {
-      console.error('Failed to show rewarded interstitial ad:', error);
-      
       // Try to preload for next time
       setTimeout(() => this.preloadRewardedInterstitialAd(), 5000);
       
@@ -1085,19 +974,14 @@ class AdMobService {
   public async openDebugMenu(adUnitId: string): Promise<void> {
     try {
       if (!this.adsInitialized) {
-        console.warn('AdMob is not initialized, initializing now...');
         await this.initialize();
       }
       
       if (__DEV__) {
-        console.log(`Opening debug menu for ad unit: ${adUnitId}`);
         // @ts-ignore - Method exists in latest version but might not be typed
         await MobileAds().openDebugMenu(adUnitId);
-      } else {
-        console.warn('Debug menu can only be opened in development builds');
       }
     } catch (error) {
-      console.error('Error opening debug menu:', error);
       throw error;
     }
   }
@@ -1108,15 +992,11 @@ class AdMobService {
   public async openAdInspector(): Promise<void> {
     try {
       if (!this.adsInitialized) {
-        console.warn('AdMob is not initialized, initializing now...');
         await this.initialize();
       }
       
-      console.log('Opening Ad Inspector...');
       await MobileAds().openAdInspector();
-      console.log('Ad Inspector closed');
     } catch (error) {
-      console.error('Error opening Ad Inspector:', error);
       throw error;
     }
   }
@@ -1132,7 +1012,6 @@ class AdMobService {
     if (this.appVolume !== clampedVolume) {
       this.appVolume = clampedVolume;
       MobileAds().setAppVolume(clampedVolume);
-      console.log(`Ad volume set to ${clampedVolume}`);
     }
   }
 
@@ -1152,7 +1031,6 @@ class AdMobService {
     if (this.appMuted !== muted) {
       this.appMuted = muted;
       MobileAds().setAppMuted(muted);
-      console.log(`App ${muted ? 'muted' : 'unmuted'} for ads`);
     }
   }
 
@@ -1177,8 +1055,6 @@ class AdMobService {
    * @param event The ad revenue event
    */
   public handleAdRevenue(event: PaidEvent): void {
-    console.log(`Ad revenue reported: ${event.value} ${event.currency} (${RevenuePrecisions[event.precision]})`);
-    
     // Forward to callback if set
     if (this.onAdRevenue) {
       this.onAdRevenue(event);
@@ -1204,8 +1080,6 @@ class AdMobService {
     this.interstitialCache.clear();
     this.rewardedCache.clear();
     this.rewardedInterstitialCache.clear();
-    
-    console.log('AdMobService cleaned up');
   }
 
   /**
@@ -1214,41 +1088,29 @@ class AdMobService {
    */
   public async testAdDisplay(): Promise<void> {
     try {
-      console.log('===== AD TEST MODE =====');
-      console.log('Attempting to test all ad types...');
-      
-      console.log('\nTEST #1: App Open Ad');
       await this.loadAppOpenAd();
       await new Promise(resolve => setTimeout(resolve, 2000));
       const appOpenShown = await this.showAppOpenAd();
-      console.log(`App Open Ad test result: ${appOpenShown ? 'SHOWN' : 'FAILED'}`);
       
       // Wait a bit between tests
       await new Promise(resolve => setTimeout(resolve, 5000));
       
-      console.log('\nTEST #2: Rewarded Ad');
       try {
         const reward = await this.showRewardedAd();
-        console.log(`Rewarded Ad test result: ${reward ? 'REWARD EARNED' : 'NO REWARD'}`);
       } catch (error) {
-        console.log('Rewarded Ad test result: FAILED');
+        // Silently handle error
       }
       
       // Wait a bit between tests
       await new Promise(resolve => setTimeout(resolve, 5000));
       
-      console.log('\nTEST #3: Interstitial Ad');
       try {
         const interstitialShown = await this.showInterstitialAd();
-        console.log(`Interstitial Ad test result: ${interstitialShown ? 'SHOWN' : 'FAILED'}`);
       } catch (error) {
-        console.log('Interstitial Ad test result: FAILED');
+        // Silently handle error
       }
-      
-      console.log('\nAd testing complete. Check logs for any errors.');
-      console.log('======================');
     } catch (error) {
-      console.error('Error during ad testing:', error);
+      // Silently handle error
     }
   }
 
@@ -1259,13 +1121,6 @@ class AdMobService {
    */
   public async registerAsTestDevice(deviceId?: string): Promise<void> {
     try {
-      if (!deviceId) {
-        console.log('Registering current device as a test device');
-        console.log('Check logcat/console for your test device ID');
-      } else {
-        console.log(`Registering device ID: ${deviceId} as a test device`);
-      }
-      
       const testIds = deviceId 
         ? [deviceId, 'EMULATOR'] 
         : ['EMULATOR'];
@@ -1280,14 +1135,8 @@ class AdMobService {
       await MobileAds().setRequestConfiguration({
         testDeviceIdentifiers: testIds,
       });
-      
-      console.log('Test device registration completed');
-      console.log('You should now see test ads on this device/emulator');
-      console.log('Important: For iOS, check console for device ID');
-      console.log('For Android, check logcat for a message like:');
-      console.log('Use RequestConfiguration.Builder.setTestDeviceIds(Arrays.asList("33BE2250B43518CCDA7DE426D04EE231"))');
     } catch (error) {
-      console.error('Failed to register test device:', error);
+      // Silently handle error
     }
   }
 

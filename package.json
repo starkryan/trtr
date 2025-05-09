@@ -40,6 +40,8 @@
     "react-native-markdown-display": "^7.0.2",
     "react-native-pager-view": "^6.7.0",
     "react-native-permissions": "^5.3.0",
+    "react-native-purchases": "^8.9.6",
+    "react-native-purchases-ui": "^8.9.6",
     "react-native-reanimated": "^3.17.5",
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "^4.9.2",

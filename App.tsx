@@ -17,11 +17,12 @@ import SplashScreen from './src/components/SplashScreen';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { useCoinStore } from './src/store/useCoinStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
+import { firebase, getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 import { getApp } from '@react-native-firebase/app';
 import { MobileAds } from 'react-native-google-mobile-ads';
 import AdMobService from './src/services/AdMobService';
-
+import RevenueCatService from './src/services/RevenueCatService';
+import Purchases from 'react-native-purchases';
 
 
 // Define global type for our app-specific globals
@@ -31,7 +32,7 @@ declare global {
 
 // For React Native Firebase, the default app is automatically initialized
 const app = getApp();
-const messagingInstance = messaging();
+const messagingInstance = firebase.messaging();
 
 // Check if running in an emulator - this will help with debugging
 if (Platform.OS === 'android') {
@@ -55,7 +56,7 @@ if (Platform.OS === 'android') {
 }
 
 // Register background handler correctly
-messaging().setBackgroundMessageHandler(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
+firebase.messaging().setBackgroundMessageHandler(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
   // Use data payload for content
   const title = remoteMessage.data?.title;
   const body = remoteMessage.data?.body;
@@ -100,8 +101,13 @@ const App = () => {
   const [firebaseInitialized, setFirebaseInitialized] = useState(false);
   const [adsInitialized, setAdsInitialized] = useState(false);
   const [appOpenAdReady, setAppOpenAdReady] = useState(false);
+  const [purchasesInitialized, setPurchasesInitialized] = useState(false);
   const initializeCoins = useCoinStore((state) => state.initializeCoins);
   const addCoins = useCoinStore((state) => state.addCoins);
+  const [isNetworkConnected, setIsNetworkConnected] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const appState = React.useRef(AppState.currentState);
+  const isForeground = React.useRef(true);
 
   useEffect(() => {
     // Initialize Firebase Auth
@@ -160,11 +166,34 @@ const App = () => {
         setAppOpenAdReady(true);
         console.log('AdMob initialized successfully with all ad units');
       } catch (error) {
-        console.error('Failed to initialize AdMob:', error);
+        console.error('Error initializing AdMob:', error);
       }
     };
 
     initializeAdMob();
+  }, []);
+
+  useEffect(() => {
+    // Initialize RevenueCat
+    const initializeRevenueCat = async () => {
+      try {
+        const revenueCatService = RevenueCatService.getInstance();
+        await revenueCatService.initialize();
+        
+        // Add customer info update listener
+        Purchases.addCustomerInfoUpdateListener((info) => {
+          console.log('RevenueCat customer info updated:', 
+            info.activeSubscriptions.length > 0 ? 'Has active subscriptions' : 'No active subscriptions');
+        });
+        
+        console.log('RevenueCat initialized successfully');
+      } catch (error) {
+        console.error('Error initializing RevenueCat:', error);
+      }
+    };
+
+    // Call initialize function
+    initializeRevenueCat();
   }, []);
 
   useEffect(() => {
@@ -175,14 +204,14 @@ const App = () => {
         const notificationService = NotificationService.getInstance();
 
         // Request permission for notifications
-        const authStatus = await messaging().requestPermission();
+        const authStatus = await firebase.messaging().requestPermission();
         const enabled =
           authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
         if (enabled) {
           // Get the FCM token
-          const fcmToken = await messaging().getToken();
+          const fcmToken = await firebase.messaging().getToken();
           console.log('FCM Token:', fcmToken);
 
           // Create default notification channel
@@ -197,7 +226,7 @@ const App = () => {
           });
 
           // Set up foreground message handler
-          const unsubscribe = messaging().onMessage(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
+          const unsubscribe = firebase.messaging().onMessage(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
             // Use data payload for content
             const title = remoteMessage.data?.title;
             const body = remoteMessage.data?.body;
@@ -295,21 +324,11 @@ const App = () => {
   const handleSplashFinish = () => {
     setShowSplash(false);
     
-    // Show app open ad when splash screen finishes (if on Android)
-    if (Platform.OS === 'android' && adsInitialized && appOpenAdReady) {
-      // Add a slight delay to ensure the app is fully loaded before showing ad
-      setTimeout(() => {
-        console.log('Attempting to show app open ad after splash screen...');
-        AdMobService.getInstance().showAppOpenAd().then(shown => {
-          if (!shown) {
-            console.log('App open ad not available to show after splash');
-          } else {
-            console.log('App open ad shown successfully after splash');
-          }
-        }).catch(err => {
-          console.log('Failed to show app open ad after splash:', err);
-        });
-      }, 2000); // Longer delay to ensure everything is ready
+    // Show app open ad when app finishes splash screen if available
+    if (appOpenAdReady && Platform.OS === 'android') {
+      AdMobService.getInstance().showAppOpenAd().catch(err => {
+        console.log('Failed to show app open ad after splash:', err);
+      });
     }
   };
 

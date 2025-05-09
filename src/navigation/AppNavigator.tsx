@@ -7,9 +7,7 @@ import CharacterScreen from '../screens/character/CharacterScreen';
 import ChatScreen from '../screens/chat/ChatScreen';
 import { RootStackParamList } from './types';
 import SearchScreen from '../screens/search/SearchScreen';
-
-
-
+import PremiumScreen from '../screens/subscription/PremiumScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -30,7 +28,8 @@ export const AppNavigator = () => {
     >
       
       {/* Common screens - available in both authenticated and unauthenticated states */}
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      <Stack.Screen name="Onboarding" component={OnboardingScreen} />      
+      <Stack.Screen name="Premium" component={PremiumScreen} />
       
       {!isAuthenticated ? (
         // User is not signed in
@@ -44,8 +43,7 @@ export const AppNavigator = () => {
           <Stack.Screen name="Character" component={CharacterScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
           <Stack.Screen name="Search" component={SearchScreen} />
-     
-         
+
         </>
       )}
     </Stack.Navigator>
