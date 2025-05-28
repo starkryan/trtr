@@ -55,6 +55,7 @@ function ChatScreen({ route, navigation }: Props) {
   const [messageCount, setMessageCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
   const isSendingMessage = useRef(false);
   const typingAnimation = useRef(new Animated.Value(0)).current;
   const [showCallModal, setShowCallModal] = useState(false);
@@ -128,26 +129,29 @@ function ChatScreen({ route, navigation }: Props) {
     }
   }, [messages.length]);
 
-  // Handle keyboard show/hide events
+  // Handle keyboard show/hide events for both iOS and Android
   useEffect(() => {
     let keyboardDidShowListener: EmitterSubscription;
     let keyboardDidHideListener: EmitterSubscription;
     
-    if (Platform.OS === 'ios') {
-      keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+    // Set up listeners for both platforms
+    keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardDidShow' : 'keyboardDidShow',
+      () => {
         scrollToBottom();
-      });
-      
-      keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      }
+    );
+    
+    keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardDidHide' : 'keyboardDidHide',
+      () => {
         scrollToBottom();
-      });
-    }
+      }
+    );
     
     return () => {
-      if (Platform.OS === 'ios') {
-        keyboardDidShowListener?.remove();
-        keyboardDidHideListener?.remove();
-      }
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
     };
   }, [scrollToBottom]);
 
@@ -396,6 +400,15 @@ function ChatScreen({ route, navigation }: Props) {
       </View>
     );
   };
+
+  // Force keyboard to appear (fix for Android)
+  const forceShowKeyboard = useCallback(() => {
+    if (Platform.OS === 'android' && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, []);
 
   const handleSendMessage = useCallback(async () => {
     if (!inputText.trim() || isLoading) return;
@@ -689,7 +702,7 @@ function ChatScreen({ route, navigation }: Props) {
 
   return (
     <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="padding"
       className="flex-1"
       keyboardVerticalOffset={keyboardOffset}
     >
@@ -801,17 +814,27 @@ function ChatScreen({ route, navigation }: Props) {
             />
 
             {/* Input Area Container */}
-            <View className="bg-gray-800/80 backdrop-blur-sm border-t border-gray-700/50">
+            <View 
+              className="bg-gray-800/80 backdrop-blur-sm border-t border-gray-700/50"
+            >
               {/* Rewarded Ad Prompt - Moved above input */}
               {renderRewardedAdPrompt()}
 
               {/* Message Input */}
               <View className="p-2">
                 <View className="flex-row items-center bg-gray-700/70 rounded-full px-3 py-1">
-                  <TouchableOpacity className="mr-2" disabled={isLoading || showRewardedAdPrompt}>
-                    <Icon name="emoticon-outline" size={24} color={isLoading || showRewardedAdPrompt ? "#6B7280" : "#fff"} />
+                  <TouchableOpacity 
+                    className="mr-2" 
+                    disabled={isLoading || showRewardedAdPrompt}
+                    onPress={forceShowKeyboard}>
+                    <Icon 
+                      name="emoticon-outline" 
+                      size={24} 
+                      color={isLoading || showRewardedAdPrompt ? "#6B7280" : "#fff"} 
+                    />
                   </TouchableOpacity>
                   <TextInput
+                    ref={inputRef}
                     className="flex-1 text-white py-2 px-1"
                     placeholder={showRewardedAdPrompt ? "Please watch ad or use coins" : "Type a message..."}
                     placeholderTextColor="#9CA3AF"
@@ -820,6 +843,7 @@ function ChatScreen({ route, navigation }: Props) {
                     multiline
                     editable={!isLoading && !showRewardedAdPrompt}
                     style={{ color: isLoading || showRewardedAdPrompt ? '#6B7280' : '#FFFFFF' }}
+                    onFocus={forceShowKeyboard}
                   />
                   <Pressable 
                     onPress={handleSendMessage} 

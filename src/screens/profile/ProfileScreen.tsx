@@ -25,7 +25,7 @@ const coinImage = require('../../../assets/coin.png');
 
 // Hardcoded constants for app information
 const APP_NAME = 'Luvsab';
-const APP_VERSION = '1.0.4';
+const APP_VERSION = '1.0.9'; // Update this as needed
 
 const NOTIFICATION_PERMISSION = 'android.permission.POST_NOTIFICATIONS' as Permission;
 
@@ -76,6 +76,7 @@ export const ProfileScreen: React.FC<TabScreenProps<'Profile'>> = ({ navigation 
   const messagingInstance = messaging();
   const coins = useCoinStore(state => state.coins);
   const { isPremium, loading: premiumLoading } = usePremium();
+  
 
   // Initialize interstitial ad
   const { isLoaded, load, show } = useInterstitialAd();

@@ -117,6 +117,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
   const [showPremiumOnly, setShowPremiumOnly] = useState(false);
   const insets = useSafeAreaInsets();
   
+  
   // Replace the hook with state to track ad loading
   const [isRewardedAdLoading, setIsRewardedAdLoading] = useState(false);
   const { addCoins, coins } = useCoinStore();

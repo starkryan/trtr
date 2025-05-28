@@ -8,10 +8,13 @@ import ChatScreen from '../screens/chat/ChatScreen';
 import { RootStackParamList } from './types';
 import SearchScreen from '../screens/search/SearchScreen';
 import PremiumScreen from '../screens/subscription/PremiumScreen';
-
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export const AppNavigator = () => {
+interface AppNavigatorProps {
+  triggerIncomingCall: () => Promise<void>;
+}
+
+export const AppNavigator = ({ triggerIncomingCall }: AppNavigatorProps) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -39,11 +42,12 @@ export const AppNavigator = () => {
       ) : (
         // User is signed in
         <>
-          <Stack.Screen name="Tabs" component={TabNavigator} />
+          <Stack.Screen name="Tabs">
+            {props => <TabNavigator {...props} triggerIncomingCall={triggerIncomingCall} />}
+          </Stack.Screen>
           <Stack.Screen name="Character" component={CharacterScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
           <Stack.Screen name="Search" component={SearchScreen} />
-
         </>
       )}
     </Stack.Navigator>

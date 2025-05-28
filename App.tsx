@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import "./global.css"
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import ToastManager from 'toastify-react-native';
@@ -8,10 +8,12 @@ import { StatusBar, StyleSheet, Platform, View, AppState, AppStateStatus, Native
 import { navigationRef } from './src/utils/navigationService';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { AuthProvider } from './src/hooks/authContext';
-import messaging, { 
-  FirebaseMessagingTypes} from '@react-native-firebase/messaging';
+import messaging, {
+  FirebaseMessagingTypes
+} from '@react-native-firebase/messaging';
 import notifee, { AndroidImportance } from '@notifee/react-native';
 import NotificationService from './src/services/NotificationService';
+
 
 import SplashScreen from './src/components/SplashScreen';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
@@ -23,7 +25,11 @@ import { MobileAds } from 'react-native-google-mobile-ads';
 import AdMobService from './src/services/AdMobService';
 import RevenueCatService from './src/services/RevenueCatService';
 import Purchases from 'react-native-purchases';
-
+import IncomingCall from './src/components/IncomingCall'; // Import the new component
+import { getFeaturedCharacters } from './src/api/services/character'; // Import character service
+import { getMediaVideoUrls } from './src/api/services/media'; // Import new media service
+import Sound from 'react-native-sound'; // Import react-native-sound
+// import axios from 'axios'; // Remove axios import
 
 // Define global type for our app-specific globals
 declare global {
@@ -45,7 +51,7 @@ if (Platform.OS === 'android') {
   } else {
     console.log('Running on physical Android device');
     global.isEmulator = false;
-    
+
     // Log whether we're in development or production mode
     if (__DEV__) {
       console.log('Running in DEVELOPMENT mode - using test ad IDs');
@@ -80,7 +86,7 @@ firebase.messaging().setBackgroundMessageHandler(async (remoteMessage: FirebaseM
       data: remoteMessage.data, // Pass along any other data
     });
   } else {
-     console.warn("Received background message without title/body in data payload:", remoteMessage.data);
+    console.warn("Received background message without title/body in data payload:", remoteMessage.data);
   }
 });
 
@@ -109,6 +115,65 @@ const App = () => {
   const appState = React.useRef(AppState.currentState);
   const isForeground = React.useRef(true);
 
+  // State for incoming call feature
+  const [incomingCharacter, setIncomingCharacter] = useState<any>(null); // State to store the fetched character
+  const ringtoneSound = React.useRef<Sound | null>(null); // Ref to hold the Sound instance
+  const [fetchedVideoUrls, setFetchedVideoUrls] = useState<string[]>([]); // State to store fetched video URLs
+  const [showIncomingCall, setShowIncomingCall] = useState(false); // New state to control incoming call display
+  const [loadingVideoUrls, setLoadingVideoUrls] = useState(true); // State for loading video URLs
+
+  // Function to trigger the incoming call
+  const triggerIncomingCall = useCallback(async () => {
+    if (incomingCharacter || loadingVideoUrls) {
+      // Already showing a call or videos are still loading
+      return;
+    }
+
+    try {
+      const characters = await getFeaturedCharacters();
+      if (characters && characters.length > 0) {
+        const randomCharacter = characters[Math.floor(Math.random() * characters.length)];
+        setIncomingCharacter(randomCharacter);
+
+        // Load the ringtone sound
+        Sound.setCategory('Playback');
+        const sound = new Sound('incoming_call.mp3', Sound.MAIN_BUNDLE, (error) => {
+          if (error) {
+            console.log('Failed to load the sound', error);
+            return;
+          }
+          console.log('Ringtone loaded successfully');
+          ringtoneSound.current = sound;
+          ringtoneSound.current.setNumberOfLoops(-1);
+          ringtoneSound.current.play((success) => {
+            if (success) {
+              console.log('Ringtone playing');
+            } else {
+              console.log('Ringtone playback failed due to audio decoding errors');
+            }
+          });
+        });
+
+        setShowIncomingCall(true); // Show the IncomingCall component
+      } else {
+        console.warn('No featured characters found to display for incoming call.');
+      }
+    } catch (error) {
+      console.error('Error fetching featured characters for incoming call:', error);
+    }
+  }, [incomingCharacter, loadingVideoUrls]);
+
+  // Function to dismiss the incoming call UI
+  const dismissIncomingCall = useCallback(() => {
+    setShowIncomingCall(false);
+    setIncomingCharacter(null);
+    if (ringtoneSound.current) {
+      ringtoneSound.current.stop();
+      ringtoneSound.current.release();
+      ringtoneSound.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     // Initialize Firebase Auth
     const auth = getAuth(app);
@@ -120,48 +185,61 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+    // Fetch video URLs from backend
+    const fetchVideos = async () => {
+      try {
+        const response = await getMediaVideoUrls();
+        setFetchedVideoUrls(response);
+        console.log('Fetched video URLs:', response);
+      } catch (error) {
+        console.error('Error fetching video URLs:', error);
+        setFetchedVideoUrls([
+          'https://leome.b-cdn.net/videos/video1.mp4',
+          'https://leome.b-cdn.net/videos/video10.mp4',
+          'https://leome.b-cdn.net/videos/video11.mp4',
+          'https://leome.b-cdn.net/videos/video12.mp4',
+          'https://leome.b-cdn.net/videos/video13.mp4',
+          'https://leome.b-cdn.net/videos/video14.mp4',
+          'https://leome.b-cdn.net/videos/video15.mp4',
+          'https://leome.b-cdn.net/videos/video16.mp4',
+          'https://leome.b-cdn.net/videos/video2.mp4',
+          'https://leome.b-cdn.net/videos/video3.mp4',
+          'https://leome.b-cdn.net/videos/video4.mp4',
+          'https://leome.b-cdn.net/videos/video5.mp4',
+          'https://leome.b-cdn.net/videos/video6.mp4',
+          'https://leome.b-cdn.net/videos/video7.mp4',
+          'https://leome.b-cdn.net/videos/video8.mp4',
+          'https://leome.b-cdn.net/videos/video9.mp4',
+        ]);
+      } finally {
+        setLoadingVideoUrls(false);
+      }
+    };
+
+    fetchVideos();
+  }, []);
+
+  useEffect(() => {
     // Initialize AdMob
     const initializeAdMob = async () => {
       if (Platform.OS !== 'android' && Platform.OS !== 'ios') return;
-      
+
       try {
-        // Initialize MobileAds SDK first with the app ID
         await MobileAds().initialize();
         console.log('MobileAds SDK initialized successfully');
-        
-        // Initialize AdMob service (which handles the SDK initialization)
+
         const adMobService = AdMobService.getInstance();
         await adMobService.initialize();
-        
-        // Set initial volume settings - default is full volume unless app has custom audio settings
-        // You can integrate this with your app's audio system
-        // For example, if your app has a sound settings store:
-        // const soundEnabled = await AsyncStorage.getItem('@sound_enabled');
-        // adMobService.setAppMuted(soundEnabled === 'false');
-        
-        // Setup ad revenue callback for analytics
+
         adMobService.setAdRevenueCallback((event) => {
-          // You can integrate with your analytics system here
           console.log(`Ad revenue: ${event.value} ${event.currency}`);
-          
-          // Example: if you use Firebase Analytics
-          // analytics().logEvent('ad_impression_revenue', {
-          //   value: event.value,
-          //   currency: event.currency,
-          //   precision: event.precision,
-          //   ad_unit_id: event.adUnitId // if available
-          // });
         });
-        
-        // Preload all ad types
+
         await adMobService.loadAppOpenAd(() => {
           console.log('App open ad closed');
-          // Load the next one after this one closes
           adMobService.loadAppOpenAd();
         });
-        
-        // The AdMobService will automatically preload all ad types during initialization
-        
+
         setAdsInitialized(true);
         setAppOpenAdReady(true);
         console.log('AdMob initialized successfully with all ad units');
@@ -179,20 +257,18 @@ const App = () => {
       try {
         const revenueCatService = RevenueCatService.getInstance();
         await revenueCatService.initialize();
-        
-        // Add customer info update listener
+
         Purchases.addCustomerInfoUpdateListener((info) => {
-          console.log('RevenueCat customer info updated:', 
+          console.log('RevenueCat customer info updated:',
             info.activeSubscriptions.length > 0 ? 'Has active subscriptions' : 'No active subscriptions');
         });
-        
+
         console.log('RevenueCat initialized successfully');
       } catch (error) {
         console.error('Error initializing RevenueCat:', error);
       }
     };
 
-    // Call initialize function
     initializeRevenueCat();
   }, []);
 
@@ -200,57 +276,50 @@ const App = () => {
     // Initialize FCM and notifications
     const initializeNotifications = async () => {
       try {
-        // Initialize NotificationService singleton
         const notificationService = NotificationService.getInstance();
 
-        // Request permission for notifications
         const authStatus = await firebase.messaging().requestPermission();
         const enabled =
           authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
         if (enabled) {
-          // Get the FCM token
           const fcmToken = await firebase.messaging().getToken();
           console.log('FCM Token:', fcmToken);
 
-          // Create default notification channel
           await notifee.createChannel({
             id: 'default',
             name: 'Default Channel',
             importance: AndroidImportance.HIGH,
             sound: 'default',
             vibration: true,
-            vibrationPattern: [300, 500, 300, 500], // ON, OFF, ON, OFF pattern (ms)
+            vibrationPattern: [300, 500, 300, 500],
             badge: true
           });
 
-          // Set up foreground message handler
           const unsubscribe = firebase.messaging().onMessage(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-            // Use data payload for content
             const title = remoteMessage.data?.title;
             const body = remoteMessage.data?.body;
 
-            // Ensure title and body are strings before displaying
             if (typeof title === 'string' && typeof body === 'string') {
               await notifee.displayNotification({
                 title: title,
                 body: body,
                 android: {
                   channelId: 'default',
-                  smallIcon: 'ic_notification', // make sure this drawable exists
+                  smallIcon: 'ic_notification',
                   color: '#EC4899',
                   sound: 'default',
-                  vibrationPattern: [300, 500, 300, 500], // ON, OFF, ON, OFF pattern (ms)
+                  vibrationPattern: [300, 500, 300, 500],
                   importance: AndroidImportance.HIGH,
                   pressAction: {
                     id: 'default',
                   },
                 },
-                data: remoteMessage.data, // Pass along any other data
+                data: remoteMessage.data,
               });
             } else {
-               console.warn("Received foreground message without title/body in data payload:", remoteMessage.data);
+              console.warn("Received foreground message without title/body in data payload:", remoteMessage.data);
             }
           });
 
@@ -270,14 +339,11 @@ const App = () => {
     // Initialize app services
     const init = async () => {
       try {
-        // Wait for Firebase to initialize
         if (!firebaseInitialized) return;
 
-        // Initialize coins with better error handling
         try {
           const storedCoins = await AsyncStorage.getItem('@coins');
           if (!storedCoins) {
-            // Give initial coins to new users
             await AsyncStorage.setItem('@coins', '10');
             addCoins(10);
           } else {
@@ -285,12 +351,10 @@ const App = () => {
           }
         } catch (error) {
           console.error('Error initializing coins:', error);
-          // Fallback: set default coins
           await AsyncStorage.setItem('@coins', '10');
           addCoins(10);
         }
 
-        // Wait for any initialization tasks
         await new Promise(resolve => setTimeout(resolve, 100));
       } catch (error) {
         console.error('Initialization failed:', error);
@@ -303,17 +367,6 @@ const App = () => {
   useEffect(() => {
     // NetInfo connectivity listener
     const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
-      // Remove intrusive toast notifications
-      // They're not necessary for normal app usage and can be annoying
-      
-      // if (state.isConnected) {
-      //   Toast.success('You are connected to the internet');
-      // } else {
-      //   Toast.error('No internet connection');
-      // }
-      
-      // Instead, just update internal state if needed
-      // This is handled silently
       console.log('Network status changed:', state.isConnected ? 'connected' : 'disconnected');
     });
 
@@ -323,7 +376,7 @@ const App = () => {
   // Handle splash screen animation finished
   const handleSplashFinish = () => {
     setShowSplash(false);
-    
+
     // Show app open ad when app finishes splash screen if available
     if (appOpenAdReady && Platform.OS === 'android') {
       AdMobService.getInstance().showAppOpenAd().catch(err => {
@@ -331,6 +384,16 @@ const App = () => {
       });
     }
   };
+
+  // Clean up ringtone on component unmount
+  useEffect(() => {
+    return () => {
+      if (ringtoneSound.current) {
+        ringtoneSound.current.release();
+        ringtoneSound.current = null;
+      }
+    };
+  }, []);
 
   // Example of syncing app audio settings with ad volume
   const updateAdVolumeFromAppSettings = (volume: number, muted: boolean) => {
@@ -343,18 +406,17 @@ const App = () => {
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
-        // App is going to background, clean up resources
         console.log('App going to background, cleaning up ad resources');
         AdMobService.getInstance().cleanup();
+        if (ringtoneSound.current) {
+          ringtoneSound.current.stop();
+        }
       } else if (nextAppState === 'active') {
-        // App is coming to foreground, reinitialize and potentially show ad
         console.log('App returning to foreground');
         if (adsInitialized) {
           console.log('Reinitializing ads after returning to foreground');
-          // Just reinitialize when returning to the app - this handles cache refresh internally
           AdMobService.getInstance().initialize().then(() => {
-            // Show app open ad when returning to the app (with probability to avoid annoying users)
-            if (Math.random() < 0.3) { // 30% chance to show ad when returning to app
+            if (Math.random() < 0.3) {
               console.log('Attempting to show app open ad after app return');
               AdMobService.getInstance().showAppOpenAd();
             }
@@ -363,12 +425,10 @@ const App = () => {
       }
     };
 
-    // Subscribe to app state changes
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
       subscription.remove();
-      // Clean up on component unmount
       AdMobService.getInstance().cleanup();
     };
   }, [adsInitialized]);
@@ -382,23 +442,20 @@ const App = () => {
             ref={navigationRef}
             theme={MyTheme}
             onStateChange={() => {
-              // When navigation state changes, consider showing app open ads
-              // but only when app is already initialized
-              if (!showSplash && Platform.OS === 'android' && Math.random() < 0.2) { // 20% chance
+              if (!showSplash && Platform.OS === 'android' && Math.random() < 0.2) {
                 AdMobService.getInstance().showAppOpenAd().catch(err => {
                   console.log('Failed to show app open ad on navigation:', err);
                 });
               }
             }}
           >
-            <AppNavigator />
+            <AppNavigator triggerIncomingCall={triggerIncomingCall} />
           </NavigationContainer>
         </AuthProvider>
         <ToastManager
           height={60}
           width={300}
           duration={3000}
-          animationStyle="slideInOut"
           position="top"
           style={{
             backgroundColor: '#1F2937',
@@ -420,6 +477,15 @@ const App = () => {
         />
       </View>
       {showSplash && <SplashScreen onAnimationFinish={handleSplashFinish} />}
+      {showIncomingCall && incomingCharacter && fetchedVideoUrls.length > 0 && (
+        <IncomingCall
+          videoUrls={fetchedVideoUrls}
+          callerName={incomingCharacter.name}
+          callerImage={incomingCharacter.avatar}
+          onAccept={dismissIncomingCall} // IncomingCall will handle video internally
+          onDecline={dismissIncomingCall}
+        />
+      )}
     </SafeAreaProvider>
   );
 };

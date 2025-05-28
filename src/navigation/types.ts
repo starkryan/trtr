@@ -28,6 +28,11 @@ export type RootStackParamList = {
   Premium: {
     fromOnboarding?: boolean;
   };
+  IncomingCall: {
+    videoUrls: string[]; // Changed to array of video URLs
+    callerName: string;
+    callerImage?: string;
+  };
 };
 
 // Screen props types
@@ -46,4 +51,3 @@ declare global {
     interface RootParamList extends RootStackParamList { }
   }
 }
-

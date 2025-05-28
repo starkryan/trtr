@@ -6,16 +6,12 @@ import {
   ActivityIndicator,
   ImageBackground,
   ScrollView,
-  Alert,
-  Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
-import { LinearGradient } from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Purchases, { PurchasesPackage } from 'react-native-purchases';
-import { MotiView } from 'moti';
 import RevenueCatService from '../../services/RevenueCatService';
 import Toast from 'toastify-react-native';
 import { useAuth } from '../../hooks/authContext';
@@ -25,14 +21,16 @@ const bgImage = require('../../../assets/bg.jpeg');
 
 // Define benefit items
 const premiumBenefits = [
-  { icon: 'crown', title: 'Full Access', description: 'Unlock all premium characters' },
-  { icon: 'lightning-bolt', title: 'Unlimited Chats', description: 'No daily message limits' },
-  { icon: 'block-helper', title: 'Ad-Free Experience', description: 'No more advertisements' },
-  { icon: 'star', title: 'Priority Support', description: 'Get help when you need it' },
-  { icon: 'shield-lock', title: 'Exclusive Features', description: 'Early access to new features' },
+  { icon: 'crown', title: 'Full Access' },
+  { icon: 'lightning-bolt', title: 'Unlimited Chats' },
+  { icon: 'block-helper', title: 'Ad-Free' },
+  { icon: 'star', title: 'Priority Support' },
+  { icon: 'shield-lock', title: 'Exclusive' },
 ];
 
 type PremiumScreenProps = NativeStackScreenProps<RootStackParamList, 'Premium'>;
+
+const ACCENT = '#E11D48'; // pink-600
 
 const PremiumScreen: React.FC<PremiumScreenProps> = ({ navigation, route }) => {
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
@@ -104,7 +102,7 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ navigation, route }) => {
       const customerInfo = await revenueCatService.purchasePackage(selectedPackage);
       
       if (customerInfo) {
-        Toast.success('Subscription activated successfully!');
+        Toast.success('Subscription activated!');
         
         // If this was during onboarding, continue to main app
         if (isFromOnboarding) {
@@ -147,7 +145,7 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ navigation, route }) => {
       const hasPremium = await revenueCatService.checkPremiumAccess();
       
       if (hasPremium) {
-        Toast.success('Your subscription has been restored!');
+        Toast.success('Subscription restored!');
         
         // If this was during onboarding, continue to main app
         if (isFromOnboarding) {
@@ -183,254 +181,130 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ navigation, route }) => {
   };
 
   // Render a package option
-  const renderPackageOption = (pkg: PurchasesPackage, index: number) => {
+  const renderPackageOption = (pkg: PurchasesPackage) => {
     const isSelected = selectedPackage?.identifier === pkg.identifier;
     const packageInfo = pkg.product;
-    
-    // Determine if this is the most popular plan
-    const isMostPopular = pkg.identifier.includes('monthly') || pkg.identifier.includes('month');
-    
     return (
-      <MotiView
+      <TouchableOpacity
         key={pkg.identifier}
-        from={{ opacity: 0, translateY: 20 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ delay: 300 + (index * 100), type: 'timing', duration: 400 }}
+        activeOpacity={0.85}
+        onPress={() => setSelectedPackage(pkg)}
+        className={`flex-row items-center rounded-xl border-2 mb-3 px-4 py-4 ${
+          isSelected
+            ? 'border-pink-600 bg-pink-50'
+            : 'border-white/10 bg-white/5'
+        }`}
       >
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => setSelectedPackage(pkg)}
-          className={`mb-4 p-4 rounded-xl border-2 ${isSelected ? 'border-pink-500' : 'border-white/20'} 
-            ${isSelected ? 'bg-pink-500/10' : 'bg-black/30'}`}
-        >
-          <View className="flex-row justify-between items-center">
-            <View className="flex-1">
-              <Text className="text-white font-bold text-lg">
-                {packageInfo.title.replace('(Luvsab)', '')}
-              </Text>
-              
-              <Text className="text-white/70 text-sm mt-1">
-                {packageInfo.description}
-              </Text>
-              
-              {/* Show price details */}
-              <View className="mt-2">
-                <Text className="text-white font-semibold text-lg">
-                  {packageInfo.priceString}
-                </Text>
-              </View>
-            </View>
-            
-            {/* Show selection indicator */}
-            <View className={`h-6 w-6 rounded-full border-2 ${isSelected ? 'border-pink-500 bg-pink-500' : 'border-white/50'} justify-center items-center`}>
-              {isSelected && <Icon name="check" size={14} color="#FFFFFF" />}
-            </View>
-          </View>
-          
-          {/* Most popular badge */}
-          {isMostPopular && (
-            <View className="absolute -top-2 -right-2 bg-yellow-500 px-2 py-1 rounded-md">
-              <Text className="text-white text-xs font-bold">POPULAR</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </MotiView>
+        <View className="flex-1">
+          <Text className={`font-semibold text-base mb-0.5 ${isSelected ? 'text-pink-700' : 'text-white'}`}>{packageInfo.title.replace('(Luvsab)', '')}</Text>
+          <Text className={`text-xs mb-0.5 ${isSelected ? 'text-pink-600' : 'text-white/60'}`}>{packageInfo.description}</Text>
+        </View>
+        <View className={`w-6 h-6 rounded-full border-2 ml-3 items-center justify-center ${isSelected ? 'border-pink-600 bg-pink-600' : 'border-white bg-transparent'}`}>{isSelected && <Icon name="check" size={16} color="#fff" />}</View>
+        <Text className={`ml-3 font-bold text-base ${isSelected ? 'text-pink-700' : 'text-white'}`}>{packageInfo.priceString}</Text>
+      </TouchableOpacity>
     );
   };
 
   return (
-    <View className="flex-1">
+    <View className="flex-1 bg-gray-900">
       <ImageBackground
         source={bgImage}
-        className="flex-1"
-        style={{ width: '100%', height: '100%' }}
+        className="absolute inset-0 w-full h-full"
+        resizeMode="cover"
+        imageStyle={{ opacity: 0.25 }}
       >
-        {/* Dark overlay with gradient for better text visibility */}
-        <LinearGradient
-          colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.7)']}
-          className="absolute inset-0"
-        />
-
-        <View style={{
-          flex: 1,
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
-          paddingLeft: insets.left,
-          paddingRight: insets.right
-        }}>
-          <ScrollView
-            className="flex-1 px-5"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 40 }}
-          >
-            {/* Header Section */}
-            <MotiView
-              from={{ opacity: 0, translateY: -20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{ type: 'timing', duration: 500 }}
-              className="items-center my-8"
-            >
-              <View className="bg-pink-500/40 p-4 rounded-full mb-4">
-                <Icon name="crown" size={32} color="#FFFFFF" />
-              </View>
-              <Text className="text-white font-bold text-3xl mb-1">
-                Luvsab Premium
-              </Text>
-              <Text className="text-white/70 text-center text-base max-w-xs">
-                Unlock the full experience with our premium subscription
-              </Text>
-            </MotiView>
-
-            {/* Benefits Section */}
-            <MotiView
-              from={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ type: 'timing', duration: 600, delay: 200 }}
-              className="mb-8"
-            >
-              <Text className="text-white font-semibold text-lg mb-4">
-                Premium Benefits
-              </Text>
-              
-              {premiumBenefits.map((benefit, index) => (
-                <MotiView
-                  key={index}
-                  from={{ opacity: 0, translateX: -20 }}
-                  animate={{ opacity: 1, translateX: 0 }}
-                  transition={{ delay: 300 + (index * 100), type: 'timing', duration: 400 }}
-                  className="flex-row items-center mb-4 bg-white/10 p-3 rounded-lg"
-                >
-                  <View className="bg-pink-500/30 p-2 rounded-full mr-3">
-                    <Icon name={benefit.icon} size={20} color="#FFFFFF" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-white font-semibold">{benefit.title}</Text>
-                    <Text className="text-white/70 text-sm">{benefit.description}</Text>
-                  </View>
-                </MotiView>
-              ))}
-            </MotiView>
-
-            {/* Subscription Options */}
-            <MotiView
-              from={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ type: 'timing', duration: 600, delay: 400 }}
-              className="mb-8"
-            >
-              <Text className="text-white font-semibold text-lg mb-4">
-                Choose Your Plan
-              </Text>
-              
-              {loading ? (
-                <View className="items-center justify-center py-8">
-                  <ActivityIndicator color="#FFFFFF" size="large" />
-                  <Text className="text-white/70 mt-4">
-                    Loading subscription options...
-                  </Text>
-                </View>
-              ) : packages.length > 0 ? (
-                <View>
-                  {packages.map((pkg, index) => renderPackageOption(pkg, index))}
-                </View>
-              ) : (
-                <View className="items-center justify-center py-8 bg-white/10 rounded-lg">
-                  <Icon name="alert-circle-outline" size={32} color="#FFFFFF" />
-                  <Text className="text-white text-center mt-2">
-                    No subscription plans available
-                  </Text>
-                  <Text className="text-white/70 text-center text-sm mt-1">
-                    Please try again later
-                  </Text>
-                </View>
-              )}
-            </MotiView>
-
-            {/* Action Buttons */}
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{ type: 'timing', duration: 600, delay: 600 }}
-              className="items-center mb-6"
-            >
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={handlePurchase}
-                disabled={!selectedPackage || purchasing || loading}
-                className={`w-full py-4 rounded-xl mb-4 items-center ${
-                  !selectedPackage || purchasing || loading ? 'bg-pink-500/40' : 'bg-pink-500'
-                }`}
-              >
-                {purchasing ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Text className="text-white font-bold text-lg">
-                    {loading ? 'Loading...' : 'Subscribe Now'}
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={handleRestore}
-                disabled={restoring}
-                className="mb-4"
-              >
-                {restoring ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Text className="text-white/80 font-semibold">
-                    Restore Purchases
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              {/* Skip during onboarding or Back button */}
-              <TouchableOpacity activeOpacity={0.7} onPress={handleSkip}>
-                <Text className="text-white/60">
-                  {isFromOnboarding ? "Skip for now" : "Maybe later"}
-                </Text>
-              </TouchableOpacity>
-            </MotiView>
-
-            {/* Terms Info */}
-            <MotiView
-              from={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ type: 'timing', duration: 600, delay: 700 }}
-              className="mb-8"
-            >
-              <Text className="text-white/50 text-xs text-center">
-                Subscriptions will automatically renew unless canceled within 24-hours before the end of the current period. You can cancel anytime with your iTunes/Google Play account settings. Any unused portion of a free trial will be forfeited if you purchase a subscription.
-              </Text>
-            </MotiView>
-          </ScrollView>
-
-          {/* Back button - only show if not from onboarding */}
-          {!isFromOnboarding && (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => navigation.goBack()}
-              className="absolute top-6 left-5 bg-black/30 p-2 rounded-full"
-              style={{ marginTop: insets.top }}
-            >
-              <Icon name="arrow-left" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Loading overlay */}
-        {loading && (
-          <View className="absolute inset-0 bg-black/50 justify-center items-center">
-            <ActivityIndicator size="large" color="#FFFFFF" />
-            <Text className="text-white mt-3 text-base font-semibold">
-              Loading subscription options...
-            </Text>
-          </View>
-        )}
+        <View className="absolute inset-0 bg-gray-900/80" />
       </ImageBackground>
+      <View className="flex-1" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
+        {/* Header */}
+        <View className="flex-row items-center justify-between px-4 pt-3 mb-2">
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            className="w-9 h-9 items-center justify-center rounded-full bg-black/20"
+            hitSlop={10}
+          >
+            <Icon name="arrow-left" size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text className="text-white font-bold text-lg">Premium</Text>
+          <TouchableOpacity
+            onPress={handleSkip}
+            className="px-4 py-2 rounded-full bg-black/20"
+            hitSlop={10}
+          >
+            <Text className="text-white font-semibold text-sm">Skip</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Benefits */}
+          <View className="flex-row justify-between mt-4 mb-2">
+            {premiumBenefits.map((b, i) => (
+              <View key={i} className="items-center flex-1">
+                <View className="bg-white rounded-full p-2 mb-1">
+                  <Icon name={b.icon} size={20} color={ACCENT} />
+                </View>
+                <Text className="text-white text-xs font-medium text-center">{b.title}</Text>
+              </View>
+            ))}
+          </View>
+          {/* Plans */}
+          <View className="mt-8">
+            <Text className="text-white font-semibold text-base mb-3">Choose your plan</Text>
+            {loading ? (
+              <View className="items-center my-8">
+                <ActivityIndicator color={ACCENT} size="large" />
+              </View>
+            ) : packages.length > 0 ? (
+              <View>
+                {packages.map(renderPackageOption)}
+              </View>
+            ) : (
+              <View className="items-center my-8">
+                <Icon name="alert-circle-outline" size={32} color="#fff" />
+                <Text className="text-white mt-2">No plans available</Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+        {/* Sticky bottom actions */}
+        <View className="px-5 pb-6 pt-2 bg-gray-900/95 rounded-t-2xl items-center">
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handlePurchase}
+            disabled={!selectedPackage || purchasing || loading}
+            className={`w-full rounded-xl py-4 items-center mb-2 ${
+              !selectedPackage || purchasing || loading ? 'bg-pink-300' : 'bg-pink-600'
+            }`}
+          >
+            {purchasing ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text className="text-white font-bold text-base tracking-wide">Subscribe</Text>
+            )}
+          </TouchableOpacity>
+          <View className="flex-row items-center mb-1">
+            <TouchableOpacity onPress={handleRestore} disabled={restoring}>
+              <Text className="text-pink-600 font-semibold text-sm opacity-90">{restoring ? 'Restoring...' : 'Restore'}</Text>
+            </TouchableOpacity>
+            <Text className="text-white opacity-30 mx-2">|</Text>
+            <TouchableOpacity onPress={handleSkip}>
+              <Text className="text-pink-600 font-semibold text-sm opacity-90">{isFromOnboarding ? 'Skip' : 'Maybe later'}</Text>
+            </TouchableOpacity>
+          </View>
+          <Text className="text-white opacity-40 text-xs text-center mt-1 mb-1">
+            Subscriptions auto-renew unless canceled 24h before period ends. Cancel anytime in your account settings.
+          </Text>
+        </View>
+      </View>
+      {loading && (
+        <View className="absolute inset-0 bg-black/40 items-center justify-center z-10">
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
     </View>
   );
 };
 
-export default PremiumScreen; 
+export default PremiumScreen;

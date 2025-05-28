@@ -7,6 +7,7 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { MaterialTopTabScreenProps } from '@react-navigation/material-top-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { ParamListBase, RouteProp } from '@react-navigation/native'; // Import RouteProp and ParamListBase
 
 import { HomeScreen } from '../screens/home/HomeScreen';
 import InboxScreen from '../screens/inbox/InboxScreen';
@@ -100,7 +101,11 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   );
 };
 
-export const TabNavigator = () => {
+interface TabNavigatorProps {
+  triggerIncomingCall: () => Promise<void>;
+}
+
+export const TabNavigator = ({ triggerIncomingCall }: TabNavigatorProps) => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -123,7 +128,6 @@ export const TabNavigator = () => {
       >
         <Tab.Screen
           name="HomeTab"
-          component={HomeScreen}
           options={{
             title: 'Home',
             tabBarIcon: ({ color }) => (
@@ -132,7 +136,9 @@ export const TabNavigator = () => {
               </Animated.View>
             ),
           }}
-        />
+        >
+          {props => <HomeScreen {...props} triggerIncomingCall={triggerIncomingCall} />}
+        </Tab.Screen>
         <Tab.Screen
           name="Inbox"
           component={InboxScreen}
@@ -172,4 +178,4 @@ export const TabNavigator = () => {
       </Tab.Navigator>
     </View>
   );
-}; 
+};

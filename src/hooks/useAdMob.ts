@@ -47,7 +47,9 @@ export const useInterstitialAd = () => {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
       setLoading(false);
-      console.error('Error showing interstitial ad:', error);
+      if (__DEV__) {
+        console.error('Error showing interstitial ad:', error);
+      }
       return false;
     }
   }, []);
@@ -118,7 +120,9 @@ export const useRewardedAd = () => {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
       setLoading(false);
-      console.error('Error showing rewarded ad:', error);
+      if (__DEV__) {
+        console.error('Error showing rewarded ad:', error);
+      }
       return false;
     }
   }, []);
@@ -189,7 +193,9 @@ export const useRewardedInterstitialAd = () => {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
       setLoading(false);
-      console.error('Error showing rewarded interstitial ad:', error);
+      if (__DEV__) {
+        console.error('Error showing rewarded interstitial ad:', error);
+      }
       return false;
     }
   }, []);
@@ -212,4 +218,4 @@ export const useRewardedInterstitialAd = () => {
     load,
     show,
   };
-}; 
+};

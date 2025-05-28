@@ -8,12 +8,12 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { getCharacters } from '../../api/services';
 import Ionicons from 'react-native-vector-icons/MaterialIcons';
 import Toast from "toastify-react-native"
-import { TabScreenProps } from '../../navigation/types';
+import { TabScreenProps, RootStackParamList } from '../../navigation/types'; // Import RootStackParamList
 import BannerAdComponent from '../../components/ads/BannerAdComponent';
 import NativeAdComponent from '../../components/ads/NativeAdComponent';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
-
-
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import { useCallback } from 'react'; // Import useCallback
 
 export interface Profile {
   id: string;
@@ -455,23 +455,19 @@ const ProfileGrid = ({ profiles, onProfilePress, loading, onRefresh, selectedTab
   );
 };
 
-export const HomeScreen: React.FC<TabScreenProps<'HomeTab'>> = ({ navigation }) => {
+interface HomeScreenProps extends TabScreenProps<'HomeTab'> {
+  triggerIncomingCall: () => Promise<void>;
+}
+
+export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, triggerIncomingCall }) => {
   const { t } = useTranslation();
   const [selectedTab, setSelectedTab] = useState(0);
   const [characters, setCharacters] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [navigationStatus, setNavigationStatus] = useState<string | null>(null);
 
-
- 
-
   const fetchCharacters = async (showLoadingToast = false) => {
     try {
-      // Remove the refreshing toast - the pull-to-refresh indicator is enough
-      // if (showLoadingToast) {
-      //   Toast.info("Refreshing");
-      // }
-      
       setLoading(true);
       const data = await getCharacters();
       const withNewFlag = data.map((char: Profile, index: number) => ({
@@ -480,15 +476,9 @@ export const HomeScreen: React.FC<TabScreenProps<'HomeTab'>> = ({ navigation }) 
       }));
       setCharacters(withNewFlag);
       setLoading(false);
-      
-      // Remove the success toast - successful loading is already visually apparent
-      // if (showLoadingToast) {
-      //   Toast.success("Updated");
-      // }
     } catch (error) {
       console.error('Failed to fetch characters:', error);
       setLoading(false);
-      // Keep error toast for network errors as this is important for user to know
       Toast.error("Network Error");
       setCharacters(mockProfiles.map((profile, index) => ({
         ...profile,
@@ -501,6 +491,20 @@ export const HomeScreen: React.FC<TabScreenProps<'HomeTab'>> = ({ navigation }) 
     fetchCharacters();
   }, []);
 
+  // Trigger incoming call when HomeScreen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const randomDelay = Math.floor(Math.random() * (20000 - 10000 + 1)) + 10000; // 10 to 20 seconds
+      const timer = setTimeout(() => {
+        triggerIncomingCall();
+      }, randomDelay);
+
+      return () => {
+        clearTimeout(timer);
+      };
+    }, [triggerIncomingCall])
+  );
+
   // Handle any navigation events to clear status messages
   useEffect(() => {
     const unsubscribe = navigation.addListener('blur', () => {
@@ -511,7 +515,6 @@ export const HomeScreen: React.FC<TabScreenProps<'HomeTab'>> = ({ navigation }) 
     return unsubscribe;
   }, [navigation, navigationStatus]);
 
-  
   const tabs = [
     { key: 'all', title: 'All', data: characters },
     { key: 'new', title: 'New', data: characters.filter(p => p.isNew) },
@@ -524,7 +527,6 @@ export const HomeScreen: React.FC<TabScreenProps<'HomeTab'>> = ({ navigation }) 
   const handleProfilePress = (profile: Profile) => {
     navigation.navigate('Character', { profile });
   };
-
 
   return (
     <View className="flex-1 bg-[#111827]">
@@ -570,4 +572,4 @@ export const HomeScreen: React.FC<TabScreenProps<'HomeTab'>> = ({ navigation }) 
       </SafeAreaView>
     </View>
   );
-}; 
+};

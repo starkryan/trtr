@@ -83,8 +83,8 @@ android {
         applicationId "com.luvsab"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 13
-        versionName "1.0.5"
+        versionCode 17
+        versionName "1.0.9"
         
         // Add this line for Google Mobile Ads (using production app ID)
         manifestPlaceholders = [

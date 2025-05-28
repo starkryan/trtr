@@ -12,9 +12,7 @@ interface BannerAdComponentProps {
   containerStyle?: object;
   onAdLoaded?: () => void;
   onAdFailedToLoad?: (error: Error) => void;
-  useSimulatorAdUnit?: boolean; // New prop to force simulator ad unit
   onAdRevenue?: (event: PaidEvent) => void; // Add callback for revenue events
-  showDebugButton?: boolean; // Add prop to control debug button visibility
 }
 
 /**
@@ -25,16 +23,13 @@ const BannerAdComponent: React.FC<BannerAdComponentProps> = ({
   containerStyle = {},
   onAdLoaded,
   onAdFailedToLoad,
-  useSimulatorAdUnit = false,
   onAdRevenue,
-  showDebugButton = false // Change default to false to hide debug buttons
 }) => {
   const [adLoaded, setAdLoaded] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [hideAdSpace, setHideAdSpace] = useState(false);
   const [retryAttempts, setRetryAttempts] = useState(0);
   const [adKey, setAdKey] = useState(0); // Used to force re-render
-  const [adError, setAdError] = useState<string | null>(null);
   
   const MAX_RETRY_ATTEMPTS = 2;
   
@@ -45,23 +40,17 @@ const BannerAdComponent: React.FC<BannerAdComponentProps> = ({
       if (Platform.OS === 'android') {
         // Use the specific Android test ID
         const androidTestId = 'ca-app-pub-3940256099942544/6300978111';
-        console.log(`Using Android DEV test banner ad ID: ${androidTestId}`);
         return androidTestId;
       } else if (Platform.OS === 'ios') {
         // Use the specific iOS test ID
         const iOSTestId = 'ca-app-pub-3940256099942544/2934735716';
-        console.log(`Using iOS DEV test banner ad ID: ${iOSTestId}`);
         return iOSTestId;
       } else {
         // Fallback for other platforms in DEV (shouldn't happen for mobile)
-        // Using the library's TestIds.BANNER here might still cause issues.
-        // It's better to return a known valid test ID or handle unsupported platforms.
-        console.warn('Unsupported platform for DEV test banner, returning Android test ID as fallback');
         return 'ca-app-pub-3940256099942544/6300978111'; 
       }
     } else {
       // For production, use the real ad unit ID from AdMobService
-      console.log(`Using production banner ad ID: ${adUnitIds.banner}`);
       return adUnitIds.banner;
     }
   };
@@ -84,9 +73,13 @@ const BannerAdComponent: React.FC<BannerAdComponentProps> = ({
       // Reset error
       setError(null);
       
-      console.log(`Retrying banner ad load (attempt ${retryAttempts + 1}/${MAX_RETRY_ATTEMPTS})`);
+      if (__DEV__) {
+        console.log(`Retrying banner ad load (attempt ${retryAttempts + 1}/${MAX_RETRY_ATTEMPTS})`);
+      }
     } else {
-      console.log('Max retry attempts reached, hiding banner ad space');
+      if (__DEV__) {
+        console.log('Max retry attempts reached, hiding banner ad space');
+      }
       setHideAdSpace(true);
     }
   };
@@ -102,7 +95,9 @@ const BannerAdComponent: React.FC<BannerAdComponentProps> = ({
   }
 
   const handleAdFailedToLoad = (error: Error) => {
-    console.error('Banner ad failed to load:', error);
+    if (__DEV__) {
+      console.error('Banner ad failed to load:', error);
+    }
     setError(error);
     
     // If it's a "no-fill" error, try again after a delay
@@ -153,7 +148,9 @@ const BannerAdComponent: React.FC<BannerAdComponentProps> = ({
         size={size}
         unitId={getBannerAdUnitId()}
         onAdLoaded={() => {
-          console.log(`Banner ad loaded successfully with size: ${size}`);
+          if (__DEV__) {
+            console.log(`Banner ad loaded successfully with size: ${size}`);
+          }
           setAdLoaded(true);
           setRetryAttempts(0); // Reset retry counter on success
           if (onAdLoaded) onAdLoaded();
@@ -205,4 +202,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default BannerAdComponent; 
+export default BannerAdComponent;

@@ -36,6 +36,7 @@ export const OnboardingScreen = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(OnboardingStep.GET_STARTED);
   const insets = useSafeAreaInsets(); // Get safe area insets
   
+  
   // Reference to track mounting state
   const isMountedRef = React.useRef(false);
 

@@ -205,7 +205,9 @@ class AdMobService {
       
       this.adsInitialized = true;
     } catch (err) {
-      // Error handling without console.error
+      if (__DEV__) {
+        console.error('Error initializing AdMobService:', err);
+      }
     }
   }
 
@@ -225,7 +227,9 @@ class AdMobService {
     try {
       await Promise.allSettled(preloadPromises);
     } catch (error) {
-      // Error handling without console.error
+      if (__DEV__) {
+        console.error('Error preloading ads in parallel:', error);
+      }
     }
   }
 
@@ -375,7 +379,7 @@ class AdMobService {
       
       this.appOpenAd = AppOpenAd.createForAdRequest(adUnitId, {
         ...defaultRequestOptions,
-        requestNonPersonalizedAdsOnly: this.consentStatus === AdsConsentStatus.OBTAINED,
+        requestNonPersonalizedAdsOnly: this.consentStatus !== AdsConsentStatus.OBTAINED,
       });
       
       const loadedListener = this.appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
@@ -1151,4 +1155,4 @@ class AdMobService {
   }
 }
 
-export default AdMobService; 
+export default AdMobService;

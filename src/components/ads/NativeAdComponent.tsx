@@ -81,7 +81,9 @@ const NativeAdComponent: React.FC<NativeAdComponentProps> = ({
       // The NativeAd is already loaded at this point from createForAdRequest
       setTimeout(() => {
         if (nativeAd) {
-          console.log('Native ad loaded successfully');
+          if (__DEV__) {
+            console.log('Native ad loaded successfully');
+          }
           setLoading(false);
           setRetryAttempts(0); // Reset retry counter on success
           if (onAdLoaded) onAdLoaded();
@@ -89,14 +91,18 @@ const NativeAdComponent: React.FC<NativeAdComponentProps> = ({
       }, 100);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
-      console.error('Error setting up native ad:', error);
+      if (__DEV__) {
+        console.error('Error setting up native ad:', error);
+      }
       setError(error);
       setLoading(false);
       
       // Handle retries for errors
       if (retryAttempts < MAX_RETRY_ATTEMPTS) {
         const delay = Math.pow(2, retryAttempts) * 1000; // Exponential backoff
-        console.log(`Retrying native ad load in ${delay}ms (attempt ${retryAttempts + 1}/${MAX_RETRY_ATTEMPTS})`);
+        if (__DEV__) {
+          console.log(`Retrying native ad load in ${delay}ms (attempt ${retryAttempts + 1}/${MAX_RETRY_ATTEMPTS})`);
+        }
         
         setTimeout(() => {
           setRetryAttempts(prev => prev + 1);
@@ -357,4 +363,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NativeAdComponent; 
+export default NativeAdComponent;
