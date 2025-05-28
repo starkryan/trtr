@@ -163,8 +163,8 @@ const App = () => {
     }
   }, [incomingCharacter, loadingVideoUrls]);
 
-  // Function to dismiss the incoming call UI
-  const dismissIncomingCall = useCallback(() => {
+  // Function to dismiss the incoming call UI (without navigation)
+  const dismissIncomingCallUI = useCallback(() => {
     setShowIncomingCall(false);
     setIncomingCharacter(null);
     if (ringtoneSound.current) {
@@ -173,6 +173,20 @@ const App = () => {
       ringtoneSound.current = null;
     }
   }, []);
+
+  // Function to handle accepting the incoming call and navigating
+  const handleAcceptIncomingCall = useCallback(() => {
+    dismissIncomingCallUI(); // Dismiss the incoming call UI
+    if (navigationRef.current && incomingCharacter && fetchedVideoUrls.length > 0) {
+      navigationRef.current.navigate('VideoCallScreen', {
+        videoUrls: fetchedVideoUrls,
+        callerName: incomingCharacter.name,
+        callerImage: incomingCharacter.avatar,
+      });
+    } else {
+      console.warn('Navigation failed: Missing navigationRef, incomingCharacter, or videoUrls.');
+    }
+  }, [dismissIncomingCallUI, incomingCharacter, fetchedVideoUrls]);
 
   useEffect(() => {
     // Initialize Firebase Auth
@@ -479,11 +493,11 @@ const App = () => {
       {showSplash && <SplashScreen onAnimationFinish={handleSplashFinish} />}
       {showIncomingCall && incomingCharacter && fetchedVideoUrls.length > 0 && (
         <IncomingCall
-          videoUrls={fetchedVideoUrls}
+          videoUrls={fetchedVideoUrls} // These are passed but not used by IncomingCall itself now
           callerName={incomingCharacter.name}
           callerImage={incomingCharacter.avatar}
-          onAccept={dismissIncomingCall} // IncomingCall will handle video internally
-          onDecline={dismissIncomingCall}
+          onAccept={handleAcceptIncomingCall} // Call the new handler for navigation
+          onDecline={dismissIncomingCallUI} // Still dismisses the UI
         />
       )}
     </SafeAreaProvider>

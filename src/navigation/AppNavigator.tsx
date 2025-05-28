@@ -8,6 +8,7 @@ import ChatScreen from '../screens/chat/ChatScreen';
 import { RootStackParamList } from './types';
 import SearchScreen from '../screens/search/SearchScreen';
 import PremiumScreen from '../screens/subscription/PremiumScreen';
+import VideoCallScreen from '../screens/chat/VideoCallScreen'; // Import VideoCallScreen
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 interface AppNavigatorProps {
@@ -35,12 +36,9 @@ export const AppNavigator = ({ triggerIncomingCall }: AppNavigatorProps) => {
       <Stack.Screen name="Premium" component={PremiumScreen} />
       
       {!isAuthenticated ? (
-        // User is not signed in
         <>
-          {/* No need to duplicate Onboarding here as it's now common */}
         </>
       ) : (
-        // User is signed in
         <>
           <Stack.Screen name="Tabs">
             {props => <TabNavigator {...props} triggerIncomingCall={triggerIncomingCall} />}
@@ -48,6 +46,7 @@ export const AppNavigator = ({ triggerIncomingCall }: AppNavigatorProps) => {
           <Stack.Screen name="Character" component={CharacterScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
           <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Screen name="VideoCallScreen" component={VideoCallScreen} />
         </>
       )}
     </Stack.Navigator>

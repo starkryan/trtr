@@ -29,7 +29,12 @@ export type RootStackParamList = {
     fromOnboarding?: boolean;
   };
   IncomingCall: {
-    videoUrls: string[]; // Changed to array of video URLs
+    videoUrls: string[];
+    callerName: string;
+    callerImage?: string;
+  };
+  VideoCallScreen: { // Add VideoCallScreen to the RootStackParamList
+    videoUrls: string[];
     callerName: string;
     callerImage?: string;
   };

@@ -129,6 +129,7 @@ dependencies {
     }
 
     implementation project(':react-native-vector-icons')
+    implementation project(':react-native-video') // Add react-native-video dependency
     
     // Add Google Mobile Ads dependency
     implementation("com.google.android.gms:play-services-ads:22.6.0")
@@ -149,4 +150,3 @@ project.ext.vectoricons = [
 ]
 
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
-
